@@ -1,0 +1,48 @@
+{
+  "name": "turfbooking",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@preline/datepicker": "^3.2.3",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "express": "^5.1.0",
+    "geist": "^1.5.1",
+    "jose": "^6.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.544.0",
+    "mime-types": "^3.0.1",
+    "moment-timezone": "^0.6.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.18.1",
+    "next": "15.5.3",
+    "nodemailer": "^7.0.6",
+    "nodemon": "^3.1.10",
+    "react": "19.1.0",
+    "react-day-picker": "^9.11.0",
+    "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
+    "react-toastify": "^11.0.5",
+    "uuid": "^13.0.0",
+    "vanilla-calendar-pro": "^3.0.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "24.5.2",
+    "@types/react": "19.1.13",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "tailwindcss": "^4.1.13"
+  }
+}
