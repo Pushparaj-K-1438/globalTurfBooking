@@ -1,12 +1,16 @@
-import connectDB from "../../../../lib/mongose";
+import connectDB from "../../../../lib/mongoose";
 import Slot from "../../../../models/slots";
+import { getTenant } from "../../../../lib/tenant";
 import { NextResponse } from "next/server";
 
 // GET /api/admin/slots - Get all slots
 export async function GET() {
   try {
     await connectDB();
-    const slots = await Slot.find({}).sort({ startTime: 1 });
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
+    const slots = await Slot.find({ tenantId: tenant._id }).sort({ startTime: 1 });
     return NextResponse.json({ slots }, { status: 200 });
   } catch (error) {
     console.error("Error fetching slots:", error);
@@ -18,6 +22,8 @@ export async function GET() {
 export async function POST(request) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
     const { startTime, endTime, price, isActive } = await request.json();
 
@@ -30,6 +36,7 @@ export async function POST(request) {
       endTime,
       price: price || 400,
       isActive: isActive !== undefined ? isActive : true,
+      tenantId: tenant._id
     });
 
     return NextResponse.json({ message: "Slot created successfully", slot }, { status: 201 });

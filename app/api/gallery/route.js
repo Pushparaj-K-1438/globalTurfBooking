@@ -3,8 +3,9 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
-import connectDB from '../../../lib/mongose';
+import connectDB from '../../../lib/mongoose';
 import Gallery from '../../../models/Gallery';
+import { getTenant } from '../../../lib/tenant';
 
 // Ensure the upload directory exists
 import { mkdir } from 'fs/promises';
@@ -19,7 +20,10 @@ if (!existsSync(uploadDir)) {
 export async function GET() {
   try {
     await connectDB();
-    const images = await Gallery.find({}).sort({ createdAt: -1 });
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ message: "Tenant not identified" }, { status: 400 });
+
+    const images = await Gallery.find({ tenantId: tenant._id }).sort({ createdAt: -1 });
     return NextResponse.json({ images });
   } catch (error) {
     console.error('Error fetching gallery images:', error);
@@ -45,19 +49,22 @@ export async function POST(request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const filename = `${file.name.replace(/\\/g, '')}-${uniqueSuffix}.${
-      mime.extension(file.type) || 'jpg'
-    }`;
+    const filename = `${file.name.replace(/\\/g, '')}-${uniqueSuffix}.${mime.extension(file.type) || 'jpg'
+      }`;
     const filepath = join(uploadDir, filename);
 
     await writeFile(filepath, buffer);
 
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ message: "Tenant not identified" }, { status: 400 });
+
     const image = new Gallery({
       name: file.name,
       url: `/uploads/gallery/${filename}`,
       mimeType: file.type,
       size: file.size,
+      tenantId: tenant._id,
     });
 
     await image.save();

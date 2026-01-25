@@ -14,15 +14,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "MRK Turf",
-  description: "Premium cricket and football turf for sports enthusiasts — play, train, and compete on world-class facilities.",
-};
+import { getTenant } from "../lib/tenant";
 
-export default function RootLayout({ children }) {
+export async function generateMetadata() {
+  const tenant = await getTenant();
+  return {
+    title: tenant ? tenant.name : "Booking Platform",
+    description: tenant ? `Book spaces with ${tenant.name}` : "Premium booking platform.",
+  };
+}
+
+export default async function RootLayout({ children }) {
+  const tenant = await getTenant();
+  const theme = tenant?.settings?.theme || { primaryColor: "#10b981" };
+
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ '--primary-color': theme.primaryColor }}>
         <Header />
         <ToastContainer />
         <ClientLayout>

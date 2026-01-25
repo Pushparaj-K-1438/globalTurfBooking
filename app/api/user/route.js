@@ -1,7 +1,8 @@
-import connectDB from "../../../lib/mongose";
+import connectDB from "../../../lib/mongoose";
 import Booking from "../../../models/booking";
 import Slot from "../../../models/slots";
 import { sendBookingConfirmationEmail, sendAdminNotificationEmail } from "../../../lib/email";
+import { getTenant } from "../../../lib/tenant";
 import { NextResponse } from "next/server";
 
 // Function to generate a unique booking ID
@@ -33,6 +34,8 @@ async function generateBookingId() {
 export async function POST(request) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
     const { name, mobile, email, date, timeSlots, originalAmount, discountAmount, finalAmount, appliedOffer } = await request.json();
 
@@ -56,9 +59,9 @@ export async function POST(request) {
     const slotValidationPromises = timeSlots.map(async (timeSlot) => {
       const [startTime, endTime] = timeSlot.split(" - ");
       const slotInfo = await Slot.findOne({
-        startTime,
         endTime,
-        isActive: true
+        isActive: true,
+        tenantId: tenant._id
       });
       return { timeSlot, slotInfo };
     });
@@ -72,7 +75,7 @@ export async function POST(request) {
     }
 
     // Check if any of the slots are already booked for this date
-    const existingBookings = await Booking.find({ date });
+    const existingBookings = await Booking.find({ date, tenantId: tenant._id });
     if (existingBookings.length > 0) {
       // Check each requested slot against all existing bookings
       for (const timeSlot of timeSlots) {
@@ -97,11 +100,10 @@ export async function POST(request) {
       mobile,
       email,
       date,
-      timeSlots,
-      totalAmount: originalAmount,
       discountAmount,
       finalAmount,
-      appliedOffer
+      appliedOffer,
+      tenantId: tenant._id
     });
 
     // Send confirmation emails
@@ -153,14 +155,17 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
     if (!date) {
-        return NextResponse.json({ error: "Date is required" }, { status: 400 });
+      return NextResponse.json({ error: "Date is required" }, { status: 400 });
     }
-    const bookings = await Booking.find({date});
+    const bookings = await Booking.find({ date, tenantId: tenant._id });
     const bookedSlots = bookings.flatMap((b) => b.timeSlots || []);
-    return NextResponse.json({ bookedSlots  }, { status: 200 });
+    return NextResponse.json({ bookedSlots }, { status: 200 });
   } catch (error) {
     console.error("Error fetching bookings:", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });

@@ -1,4 +1,4 @@
-import connectDB from "../../../../lib/mongose";
+import connectDB from "../../../../lib/mongoose";
 import Admin from "../../../../models/admin";
 import { NextResponse } from "next/server";
 import { createSession } from "../../../../lib/session";

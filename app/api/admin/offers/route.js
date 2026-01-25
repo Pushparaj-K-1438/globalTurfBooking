@@ -1,12 +1,16 @@
-import connectDB from "../../../../lib/mongose";
+import connectDB from "../../../../lib/mongoose";
 import Offer from "../../../../models/offers";
+import { getTenant } from "../../../../lib/tenant";
 import { NextResponse } from "next/server";
 
 // GET /api/admin/offers - Get all offers
 export async function GET() {
   try {
     await connectDB();
-    const offers = await Offer.find({}).sort({ createdAt: -1 });
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
+    const offers = await Offer.find({ tenantId: tenant._id }).sort({ createdAt: -1 });
     return NextResponse.json({ offers }, { status: 200 });
   } catch (error) {
     console.error("Error fetching offers:", error);
@@ -33,6 +37,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "Fixed discount cannot be negative" }, { status: 400 });
     }
 
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
     const offer = await Offer.create({
       name,
       description,
@@ -42,6 +49,7 @@ export async function POST(request) {
       validFrom,
       validUntil,
       isActive: isActive !== undefined ? isActive : true,
+      tenantId: tenant._id
     });
 
     return NextResponse.json({ message: "Offer created successfully", offer }, { status: 201 });

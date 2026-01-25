@@ -1,17 +1,18 @@
 'use server';
 
-import connectDB from '../../lib/mongose';
+import connectDB from '../../lib/mongoose';
 import Booking from '../../models/booking';
+import { getTenant } from '../../lib/tenant';
 
 export async function getBookingsStats(timeframe = 'today') {
     try {
         await connectDB();
         console.log('Connected to database');
-        
+
         const now = new Date();
         let startDate, endDate;
 
-        switch(timeframe) {
+        switch (timeframe) {
             case 'today':
                 startDate = new Date(now);
                 startDate.setHours(5, 0, 0, 0); // 5:00 AM today
@@ -44,9 +45,13 @@ export async function getBookingsStats(timeframe = 'today') {
         };
 
         console.log(`Fetching bookings for ${timeframe} from ${formatDate(startDate)} to ${formatDate(endDate)}`);
-        
+
+        const tenant = await getTenant();
+        if (!tenant) throw new Error('Tenant not identified');
+
         const query = {
-            date: { 
+            tenantId: tenant._id,
+            date: {
                 $gte: formatDate(startDate),
                 $lte: formatDate(endDate)
             }
@@ -54,41 +59,41 @@ export async function getBookingsStats(timeframe = 'today') {
         const count = await Booking.countDocuments(query);
         console.log('Query:', JSON.stringify(query, null, 2));
         console.log(`Found ${count} bookings for ${timeframe}`);
-        
-        return { 
+
+        return {
             count,
             timeframe,
-            success: true 
+            success: true
         };
     } catch (error) {
         console.error('Error in getBookingsStats:', error);
-        return { 
-            count: 0, 
+        return {
+            count: 0,
             timeframe,
             success: false,
-            error: error.message 
+            error: error.message
         };
     }
 }
 export async function deleteBooking(bookingId) {
     try {
-        await connectDB();
-        console.log(`Deleting booking with ID: ${bookingId}`);
-        
-        const result = await Booking.findByIdAndDelete(bookingId);
-        
+        const tenant = await getTenant();
+        if (!tenant) throw new Error('Tenant not identified');
+
+        const result = await Booking.findOneAndDelete({ _id: bookingId, tenantId: tenant._id });
+
         if (!result) {
             console.error('Booking not found');
-            return { success: false, error: 'Booking not found' };
+            return { success: false, error: 'Booking not found or access denied' };
         }
-        
+
         console.log('Booking deleted successfully');
         return { success: true };
     } catch (error) {
         console.error('Error deleting booking:', error);
-        return { 
-            success: false, 
-            error: error.message 
+        return {
+            success: false,
+            error: error.message
         };
     }
 }
@@ -100,7 +105,7 @@ export async function getTodaysBookings() {
     try {
         await connectDB();
         console.log('Connected to database for today\'s bookings');
-        
+
         const today = new Date();
         today.setHours(5, 0, 0, 0); // 5:00 AM today (September 25, 2025)
         const tomorrow = new Date(today);
@@ -109,14 +114,18 @@ export async function getTodaysBookings() {
         // Format for YYYY-MM-DD to match database date format
         const todayStr = formatDateLocal(today); // e.g., "2025-09-25"
 
-        console.log(`Fetching today's bookings for ${todayStr}`);
-        
+        const tenant = await getTenant();
+        if (!tenant) throw new Error('Tenant not identified');
+
+        console.log(`Fetching today's bookings for ${todayStr} (Tenant: ${tenant.slug})`);
+
         const query = {
+            tenantId: tenant._id,
             date: { $gte: todayStr } // today + all future
         };
 
         // Use lean() to get plain JavaScript objects
-        const bookings =  await Booking.find(query).lean().sort({ date: 1, timeSlot: 1 });
+        const bookings = await Booking.find(query).lean().sort({ date: 1, timeSlot: 1 });
 
         // Convert non-serializable fields to plain values
         const serializedBookings = bookings.map(booking => ({
@@ -130,17 +139,17 @@ export async function getTodaysBookings() {
 
         console.log('Query:', JSON.stringify(query, null, 2));
         console.log(`Found ${serializedBookings.length} bookings for today`);
-        
-        return { 
+
+        return {
             bookings: serializedBookings,
-            success: true 
+            success: true
         };
     } catch (error) {
         console.error('Error in getTodaysBookings:', error);
-        return { 
+        return {
             bookings: [],
             success: false,
-            error: error.message 
+            error: error.message
         };
     }
 }

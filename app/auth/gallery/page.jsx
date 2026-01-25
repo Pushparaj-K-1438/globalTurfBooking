@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Upload } from 'lucide-react';
 import { showSuccess, showError } from '../../../lib/toast';
-import {X} from "lucide-react";
+import { X } from "lucide-react";
 
 export default function GalleryPage() {
   const [images, setImages] = useState([]);
@@ -23,10 +23,10 @@ export default function GalleryPage() {
     try {
       const response = await fetch('/api/gallery');
       const data = await response.json();
-      if (response.ok) {
+      if (response.ok && Array.isArray(data.images)) {
         setImages(data.images);
       } else {
-        throw new Error(data.message || 'Failed to fetch images');
+        throw new Error(data.message || 'Failed to fetch images or invalid data structure');
       }
     } catch (error) {
       console.error('Error fetching images:', error);
@@ -120,7 +120,7 @@ export default function GalleryPage() {
       }
     } catch (error) {
       console.error('Error deleting image:', error);
-      showError(error.message || 'Failed to delete image'); 
+      showError(error.message || 'Failed to delete image');
     }
   };
 
@@ -162,16 +162,16 @@ export default function GalleryPage() {
               {selectedFiles.map((file, index) => (
                 <div key={index} className="relative group">
                   <div className="flex items-center relative w-fit">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="h-20 w-20 object-cover rounded-md"
-                  />
-                  <X
-                    onClick={() => removeSelectedFile(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs p-[6px] cursor-pointer"
-                    title="Remove image"
-                  />
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="h-20 w-20 object-cover rounded-md"
+                    />
+                    <X
+                      onClick={() => removeSelectedFile(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs p-[6px] cursor-pointer"
+                      title="Remove image"
+                    />
                   </div>
                   <div className="text-xs text-gray-600 mt-1 truncate" title={file.name}>
                     {file.name}

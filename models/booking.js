@@ -15,6 +15,12 @@ const bookingSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     discountAmount: { type: Number, default: 0 },
     finalAmount: { type: Number, required: true },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: true,
+      index: true
+    },
     appliedOffer: {
       offerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer' },
       name: { type: String },
@@ -24,5 +30,7 @@ const bookingSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+bookingSchema.index({ tenantId: 1, bookingId: 1 }, { unique: true });
 
 export default mongoose.models.Booking || mongoose.model("Booking", bookingSchema);

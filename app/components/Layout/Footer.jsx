@@ -1,56 +1,127 @@
-import Link from 'next/link'
-import React from 'react'
+"use client";
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Facebook, Twitter, Instagram, Linkedin, MapPin, Mail, Phone } from 'lucide-react';
 
 const Footer = () => {
-    return (
-        <footer className="footer footer-horizontal footer-center bg-base-200 text-base-content rounded p-24 flex flex-col gap-8 bg-[#16a249]">
-            <nav className="flex md:flex-row flex-col justify-center gap-4">
-                <Link href="/" className="link link-hover">Book Now</Link>
-                <Link href="/gallery" className="link link-hover">Gallery</Link>
-                <Link href="/contact" className="link link-hover">Contact Us</Link>
-            </nav>
-            <nav>
-                <div className="flex md:justify-center gap-4">
-                    <a>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            className="fill-current">
-                            <path
-                                d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
-                        </svg>
-                    </a>
-                    <a>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            className="fill-current">
-                            <path
-                                d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path>
-                        </svg>
-                    </a>
-                    <a>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            className="fill-current">
-                            <path
-                                d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"></path>
-                        </svg>
-                    </a>
-                </div>
-            </nav>
-            <aside className="flex justify-center">
-                <p>Copyright © {new Date().getFullYear()} - All right reserved by SelfCraft Solutions.</p>
-            </aside>
-        </footer>
-    )
-}
+    const pathname = usePathname();
 
-export default Footer
+    // Hide footer on admin, auth, and super-admin routes
+    const isExcludedRoute = pathname?.startsWith('/admin') ||
+        pathname?.startsWith('/auth') ||
+        pathname?.startsWith('/super-admin') ||
+        pathname === '/login' ||
+        pathname === '/register';
+
+    if (isExcludedRoute) return null;
+
+    return (
+        <footer className="bg-emerald-950 text-emerald-100 pt-16 pb-8 border-t border-emerald-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+                    {/* Brand Column */}
+                    <div>
+                        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                            <span className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center text-white text-lg">
+                                B
+                            </span>
+                            BookIt
+                        </h2>
+                        <p className="text-emerald-200/70 text-sm leading-relaxed mb-6">
+                            The premium platform for booking venues, turfs, and spaces. Experience hassle-free booking and instant confirmations.
+                        </p>
+                        <div className="flex gap-4">
+                            <a href="#" className="p-2 bg-emerald-900/50 rounded-full hover:bg-emerald-800 transition-colors text-emerald-300">
+                                <Instagram size={18} />
+                            </a>
+                            <a href="#" className="p-2 bg-emerald-900/50 rounded-full hover:bg-emerald-800 transition-colors text-emerald-300">
+                                <Facebook size={18} />
+                            </a>
+                            <a href="#" className="p-2 bg-emerald-900/50 rounded-full hover:bg-emerald-800 transition-colors text-emerald-300">
+                                <Twitter size={18} />
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div>
+                        <h3 className="text-white font-semibold text-lg mb-4">Quick Links</h3>
+                        <ul className="space-y-3 text-sm">
+                            <li>
+                                <Link href="/" className="text-emerald-200/70 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                                    Home
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/browse" className="text-emerald-200/70 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                                    Browse Venues
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/contact" className="text-emerald-200/70 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                                    Contact Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/register-tenant" className="text-emerald-200/70 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                                    For Business
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Legal */}
+                    <div>
+                        <h3 className="text-white font-semibold text-lg mb-4">Legal</h3>
+                        <ul className="space-y-3 text-sm">
+                            <li>
+                                <Link href="/terms" className="text-emerald-200/70 hover:text-emerald-400 transition-colors">
+                                    Terms of Service
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/privacy" className="text-emerald-200/70 hover:text-emerald-400 transition-colors">
+                                    Privacy Policy
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/refunds" className="text-emerald-200/70 hover:text-emerald-400 transition-colors">
+                                    Refund Policy
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div>
+                        <h3 className="text-white font-semibold text-lg mb-4">Contact Us</h3>
+                        <ul className="space-y-4 text-sm">
+                            <li className="flex items-start gap-3 text-emerald-200/70">
+                                <MapPin className="shrink-0 text-emerald-500 mt-0.5" size={18} />
+                                <span>123 Sports Avenue, Green City, Tech Park, 500081</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-emerald-200/70">
+                                <Phone className="shrink-0 text-emerald-500" size={18} />
+                                <span>+91 98765 43210</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-emerald-200/70">
+                                <Mail className="shrink-0 text-emerald-500" size={18} />
+                                <span>support@turfbooking.com</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="border-t border-emerald-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-emerald-400/60">
+                    <p>© {new Date().getFullYear()} BookIt. All rights reserved.</p>
+                    <p className="flex items-center gap-1">
+                        Made with <span className="text-red-500">♥</span> by SelfCraft Solutions
+                    </p>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+export default Footer;

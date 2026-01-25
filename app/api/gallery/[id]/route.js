@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
-import connectDB from '../../../../lib/mongose';
+import connectDB from '../../../../lib/mongoose';
 import Gallery from '../../../../models/Gallery';
 
 // DELETE /api/gallery/[id]

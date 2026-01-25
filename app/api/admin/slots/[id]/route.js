@@ -1,12 +1,16 @@
-import connectDB from "../../../../../lib/mongose";
+import connectDB from "../../../../../lib/mongoose";
 import Slot from "../../../../../models/slots";
+import { getTenant } from "../../../../../lib/tenant";
 import { NextResponse } from "next/server";
 
 // GET /api/admin/slots/[id] - Get single slot
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const slot = await Slot.findById(params.id);
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
+    const slot = await Slot.findOne({ _id: params.id, tenantId: tenant._id });
 
     if (!slot) {
       return NextResponse.json({ error: "Slot not found" }, { status: 404 });
@@ -23,11 +27,13 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
     const { startTime, endTime, price, isActive } = await request.json();
 
-    const slot = await Slot.findByIdAndUpdate(
-      params.id,
+    const slot = await Slot.findOneAndUpdate(
+      { _id: params.id, tenantId: tenant._id },
       { startTime, endTime, price, isActive },
       { new: true, runValidators: true }
     );
@@ -47,8 +53,10 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
-    const slot = await Slot.findByIdAndDelete(params.id);
+    const slot = await Slot.findOneAndDelete({ _id: params.id, tenantId: tenant._id });
 
     if (!slot) {
       return NextResponse.json({ error: "Slot not found" }, { status: 404 });

@@ -10,6 +10,12 @@ const offerSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     validFrom: { type: Date, required: true },
     validUntil: { type: Date, required: true },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: true,
+      index: true
+    },
   },
   { timestamps: true }
 );

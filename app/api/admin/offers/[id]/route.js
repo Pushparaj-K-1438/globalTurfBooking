@@ -1,12 +1,16 @@
-import connectDB from "../../../../../lib/mongose";
+import connectDB from "../../../../../lib/mongoose";
 import Offer from "../../../../../models/offers";
+import { getTenant } from "../../../../../lib/tenant";
 import { NextResponse } from "next/server";
 
 // GET /api/admin/offers/[id] - Get single offer
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const offer = await Offer.findById(params.id);
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+
+    const offer = await Offer.findOne({ _id: params.id, tenantId: tenant._id });
 
     if (!offer) {
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });
@@ -23,11 +27,13 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
     const { name, description, minSlots, discountType, discountValue, validFrom, validUntil, isActive } = await request.json();
 
-    const offer = await Offer.findByIdAndUpdate(
-      params.id,
+    const offer = await Offer.findOneAndUpdate(
+      { _id: params.id, tenantId: tenant._id },
       { name, description, minSlots, discountType, discountValue, validFrom, validUntil, isActive },
       { new: true, runValidators: true }
     );
@@ -47,8 +53,10 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
+    const tenant = await getTenant();
+    if (!tenant) return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
 
-    const offer = await Offer.findByIdAndDelete(params.id);
+    const offer = await Offer.findOneAndDelete({ _id: params.id, tenantId: tenant._id });
 
     if (!offer) {
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });

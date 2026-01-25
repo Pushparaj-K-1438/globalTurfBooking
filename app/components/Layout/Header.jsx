@@ -1,40 +1,51 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, Images, Users, Phone, LayoutDashboard, LogOut, BadgeIndianRupee, House, ClockPlus } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut, Home, Phone, User, LogIn, ChevronRight, Search } from "lucide-react";
+import Link from 'next/link';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [tenantInfo, setTenantInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check authentication status
+  // Hide header on admin and auth routes
+  const isExcludedRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/super-admin');
+
   useEffect(() => {
-    const checkAuth = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/auth/verify', {
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        const data = await response.json();
-        setIsLoggedIn(data.authenticated);
+        const [authRes, tenantRes] = await Promise.all([
+          fetch('/api/auth/verify', { credentials: 'include', cache: 'no-store' }),
+          fetch('/api/tenants/me')
+        ]);
+
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          setUserData(authData.authenticated ? authData.user : null);
+        }
+
+        if (tenantRes.ok) {
+          const tenantData = await tenantRes.json();
+          setTenantInfo(tenantData);
+        }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        setIsLoggedIn(false);
+        console.error('Data fetch failed:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkAuth();
+    fetchData();
   }, [pathname]);
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      setIsLoggedIn(false);
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      setUserData(null);
       router.push('/login');
       router.refresh();
     } catch (error) {
@@ -42,109 +53,157 @@ const Header = () => {
     }
   };
 
-  // Common navigation items
-  const commonNavItems = [
-    { icon: House, label: "Home", href: "/" },
-    { icon: Images, label: "Gallery", href: "/gallery" },
-    { icon: Phone, label: "Contact", href: "/contact" },
-  ];
+  if (isExcludedRoute) return null;
 
-  // Private navigation items (only shown when logged in)
-  const privateNavItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/auth/dashboard" },
-    { icon: Images, label: "Gallery", href: "/auth/gallery" },
-    { icon: ClockPlus, label: "Slots", href: "/auth/slots" },
-    { icon: BadgeIndianRupee, label: "Offers", href: "/auth/offers" },
-  ];
-
-  // Combine navigation items based on auth state
-  const navItems = [
-    ...(isLoggedIn ? privateNavItems : commonNavItems),
-    {
-      icon: isLoggedIn ? LogOut : null,
-      label: isLoggedIn ? "Logout" : "",
-      href: isLoggedIn ? "#" : "/login",
-      onClick: isLoggedIn ? handleLogout : null
-    },
-  ].filter(item => item.label !== "");
+  // Determine brand name - use tenant name if available, otherwise use platform name
+  const brandName = tenantInfo?.name || "BookIt";
+  const brandInitial = brandName[0] || "B";
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-gray-200 shadow-soft bg-white text-black">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <h1 className="text-3xl font-semibold tracking-[0.15em] text-gray-800 flex items-center gap-2">
-              <span className="w-2 h-8 bg-emerald-600 rounded-sm"></span>
-              MRK TURF
-            </h1>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-14">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  variant="ghost"
-                  size="sm"
-                  className={`transition-smooth flex items-center font-medium ${pathname === item.href ? 'text-primary' : 'hover:text-primary'
-                    }`}
-                  href={item.href}
-                  onClick={(e) => {
-                    if (item.onClick) {
-                      e.preventDefault();
-                      item.onClick();
-                    }
-                  }}
-                >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.label}
-                </a>
-              ))}
+          {/* Logo Section */}
+          <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-500/20">
+              {brandInitial}
             </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent hidden sm:block">
+              {brandName}
+            </span>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link
+              href="/"
+              className={`text-sm font-medium transition-colors ${pathname === '/' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/browse"
+              className={`text-sm font-medium transition-colors ${pathname === '/browse' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
+            >
+              Browse
+            </Link>
+            <Link
+              href="/contact"
+              className={`text-sm font-medium transition-colors ${pathname === '/contact' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
+            >
+              Contact
+            </Link>
+          </div>
+
+          {/* Right Action Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            {!userData ? (
+              <>
+                <Link href="/login" className="text-slate-600 hover:text-emerald-600 font-medium text-sm transition-colors">
+                  Log in
+                </Link>
+                <Link href="/register-tenant" className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-full font-medium text-sm transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 active:scale-95 flex items-center gap-2">
+                  Get Started <ChevronRight size={16} />
+                </Link>
+              </>
+            ) : (
+              <div className="flex items-center gap-4">
+                {/* Role Based Dashboard Link */}
+                {(userData.role === 'TENANT_OWNER' || userData.role === 'TENANT_ADMIN') && (
+                  <Link
+                    href="/admin/dashboard"
+                    className="text-slate-600 hover:text-emerald-600 font-medium text-sm flex items-center gap-2 transition-colors"
+                  >
+                    <LayoutDashboard size={18} /> Dashboard
+                  </Link>
+                )}
+                {(userData.role === 'SUPER_ADMIN') && (
+                  <Link
+                    href="/super-admin/dashboard"
+                    className="text-slate-600 hover:text-emerald-600 font-medium text-sm flex items-center gap-2 transition-colors"
+                  >
+                    <LayoutDashboard size={18} /> Global Admin
+                  </Link>
+                )}
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-medium"
+                >
+                  <LogOut size={16} /> Logout
+                </button>
+
+                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border-2 border-white shadow-sm ring-1 ring-emerald-500/10">
+                  {userData.email?.[0].toUpperCase()}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
-              variant="ghost"
-              size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="transition-bounce"
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation Dropdown */}
         {isMenuOpen && (
-          <div className="md:hidden animate-slide-up">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-card rounded-lg mt-2 shadow-medium flex flex-col md:flex-row gap-4 md:gap-0">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  variant="ghost"
-                  size="sm"
-                  href={item.href}
-                  className="w-full justify-start transition-smooth hover:bg-primary/10 flex items-center cursor-pointer font-medium"
-                  onClick={(e) => {
-                    setIsMenuOpen(false);
-                    if (item.onClick) {
-                      e.preventDefault();
-                      item.onClick();
-                    }
-                  }}
-                >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.label}
-                </a>
-              ))}
+          <div className="md:hidden py-4 border-t border-slate-100 bg-white absolute left-0 right-0 shadow-xl rounded-b-2xl border-b border-slate-100 px-4 animate-in slide-in-from-top-2">
+            <div className="space-y-2">
+              <Link
+                href="/"
+                className="flex items-center gap-3 p-3 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Home size={20} /> Home
+              </Link>
+              <Link
+                href="/browse"
+                className="flex items-center gap-3 p-3 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Search size={20} /> Browse
+              </Link>
+              <Link
+                href="/contact"
+                className="flex items-center gap-3 p-3 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Phone size={20} /> Contact
+              </Link>
+              {!userData ? (
+                <div className="pt-4 flex flex-col gap-3">
+                  <Link href="/login" className="w-full py-3 text-center rounded-xl bg-slate-50 text-slate-700 font-bold hover:bg-slate-100 transition-colors">
+                    Log in
+                  </Link>
+                  <Link href="/register-tenant" className="w-full py-3 text-center rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20">
+                    Get Started
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {(userData.role === 'TENANT_OWNER' || userData.role === 'TENANT_ADMIN') && (
+                    <Link
+                      href="/admin/dashboard"
+                      className="flex items-center gap-3 p-3 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <LayoutDashboard size={20} /> Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-red-600 hover:bg-red-50 font-medium text-left mt-2"
+                  >
+                    <LogOut size={20} /> Logout
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

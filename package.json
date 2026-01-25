@@ -15,6 +15,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "geist": "^1.5.1",
     "jose": "^6.1.0",

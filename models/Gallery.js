@@ -18,6 +18,12 @@ const gallerySchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: true,
+      index: true
+    },
   },
   {
     timestamps: true,
