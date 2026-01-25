@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3 } from 'lucide-react';
+import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3, Palette } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tenantModules, setTenantModules] = useState([]);
+  const [tenantName, setTenantName] = useState('TurfAdmin');
   const router = useRouter();
   const pathname = usePathname();
 
@@ -18,12 +20,16 @@ export default function AdminLayout({ children }) {
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
-            // Optional: Redirect Super Admin to their dashboard if they wander here
             if (data.user.role === 'SUPER_ADMIN') {
               router.push('/super-admin/dashboard');
               return;
             }
             setIsAuthenticated(true);
+            // Set tenant modules if available
+            if (data.tenant) {
+              setTenantModules(data.tenant.modules || []);
+              setTenantName(data.tenant.name || 'TurfAdmin');
+            }
           } else {
             router.push('/login');
           }
@@ -50,15 +56,24 @@ export default function AdminLayout({ children }) {
     }
   };
 
-  const navItems = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Listings', href: '/admin/listings', icon: List },
-    { name: 'Slots', href: '/admin/slots', icon: Calendar },
-    { name: 'Offers', href: '/admin/offers', icon: Tag },
-    { name: 'Coupons', href: '/admin/coupons', icon: Ticket },
-    { name: 'Reviews', href: '/admin/reviews', icon: Star },
-    { name: 'Branding', href: '/admin/branding', icon: Settings },
+  const allNavItems = [
+    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, requiredModule: null }, // Always visible
+    { name: 'Listings', href: '/admin/listings', icon: List, requiredModule: ['turfs', 'hotels', 'events', 'gym', 'wellness'] }, // Visible if any of these
+    { name: 'Slots', href: '/admin/slots', icon: Calendar, requiredModule: ['turfs', 'events'] }, // Mostly for time-slot based
+    { name: 'Offers', href: '/admin/offers', icon: Tag, requiredModule: 'coupons' },
+    { name: 'Coupons', href: '/admin/coupons', icon: Ticket, requiredModule: 'coupons' },
+    { name: 'Reviews', href: '/admin/reviews', icon: Star, requiredModule: 'reviews' },
+    { name: 'Branding', href: '/admin/branding', icon: Palette, requiredModule: null },
+    { name: 'Settings', href: '/admin/settings', icon: Settings, requiredModule: null },
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (!item.requiredModule) return true;
+    if (Array.isArray(item.requiredModule)) {
+      return item.requiredModule.some(mod => tenantModules.includes(mod));
+    }
+    return tenantModules.includes(item.requiredModule);
+  });
 
   if (loading) {
     return (
@@ -96,9 +111,9 @@ export default function AdminLayout({ children }) {
         } lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
-          <div className="flex items-center justify-center h-20 border-b border-slate-100">
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500">
-              TurfAdmin
+          <div className="flex items-center justify-center h-20 border-b border-slate-100 px-4">
+            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500 truncate w-full text-center">
+              {tenantName}
             </h1>
           </div>
 

@@ -3,10 +3,17 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Footer from './Footer';
+import ChatBot from '../ChatBot';
 
 export default function ClientLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
+
+  // Hide chatbot on admin/auth pages
+  const showChatBot = !pathname?.startsWith('/admin') &&
+    !pathname?.startsWith('/super-admin') &&
+    !pathname?.startsWith('/login') &&
+    !pathname?.startsWith('/register');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,6 +37,7 @@ export default function ClientLayout({ children }) {
     <>
       {children}
       {!isLoggedIn && <Footer />}
+      {showChatBot && <ChatBot />}
     </>
   );
 }

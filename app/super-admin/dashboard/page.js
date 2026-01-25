@@ -1,190 +1,256 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { formatCurrency } from "../../../lib/currency";
-import { DollarSign, Users, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+    Building2, Users, Calendar, CreditCard, TrendingUp, TrendingDown,
+    Activity, Database, Server, HardDrive, RefreshCw, AlertCircle,
+    CheckCircle, Clock, ArrowUpRight, FileText, Settings, Shield
+} from "lucide-react";
 
 export default function SuperAdminDashboard() {
     const [stats, setStats] = useState(null);
-    const [tenants, setTenants] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchTenants = async () => {
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        setLoading(true);
         try {
-            const tenantsRes = await fetch("/api/super-admin/tenants");
-            const tenantsData = await tenantsRes.json();
-            if (Array.isArray(tenantsData)) {
-                setTenants(tenantsData);
-            } else {
-                console.error("Tenants data is not an array:", tenantsData);
-                setTenants([]);
-            }
+            const res = await fetch('/api/super-admin/platform/stats');
+            const data = await res.json();
+            setStats(data);
         } catch (error) {
-            console.error("Failed to fetch tenants", error);
+            console.error("Failed to fetch stats:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const statsRes = await fetch("/api/super-admin/analytics");
-                const statsData = await statsRes.json();
-                setStats(statsData);
-                await fetchTenants();
-            } catch (error) {
-                console.error("Failed to fetch data", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, []);
-
-    const handleUpdateTenantStatus = async (tenantId, newStatus) => {
-        try {
-            const res = await fetch(`/api/super-admin/tenants/${tenantId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus }),
-            });
-
-            if (res.ok) {
-                // Refresh the tenants list
-                await fetchTenants();
-            } else {
-                const data = await res.json();
-                alert(data.error || "Failed to update tenant status");
-            }
-        } catch (error) {
-            console.error("Failed to update tenant status", error);
-            alert("Failed to update tenant status");
-        }
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(amount);
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
             </div>
         );
     }
 
-    const StatCard = ({ title, value, icon: Icon, color, bgInfo }) => (
-        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl ${bgInfo} text-white shadow-sm`}>
-                    <Icon size={24} className={color} />
-                </div>
-            </div>
-            <p className="text-slate-500 text-sm font-medium uppercase tracking-wide">{title}</p>
-            <h3 className="text-3xl font-bold text-slate-900 mt-2">
-                {value}
-            </h3>
-        </div>
-    );
+    const quickLinks = [
+        { label: "Manage Tenants", href: "/super-admin/tenants", icon: Building2, color: "bg-blue-500" },
+        { label: "All Users", href: "/super-admin/users", icon: Users, color: "bg-purple-500" },
+        { label: "Audit Logs", href: "/super-admin/audit-logs", icon: Shield, color: "bg-amber-500" },
+        { label: "Settings", href: "/super-admin/settings", icon: Settings, color: "bg-slate-500" }
+    ];
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-4 md:p-8">
-            <header className="mb-8 md:mb-10">
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-                    Global Platform Overview
-                </h1>
-                <p className="text-slate-500 mt-1">Monitor performance across all tenants</p>
-            </header>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <StatCard
-                    title="Total Revenue"
-                    value={formatCurrency(stats?.totalRevenue || 0)}
-                    icon={DollarSign}
-                    color="text-emerald-600"
-                    bgInfo="bg-emerald-100"
-                />
-                <StatCard
-                    title="Active Tenants"
-                    value={stats?.tenantCount || 0}
-                    icon={Users}
-                    color="text-blue-600"
-                    bgInfo="bg-blue-100"
-                />
-                <StatCard
-                    title="Total Bookings"
-                    value={stats?.totalBookings || 0}
-                    icon={Calendar}
-                    color="text-purple-600"
-                    bgInfo="bg-purple-100"
-                />
+        <div className="p-6 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Platform Dashboard</h1>
+                    <p className="text-slate-500">
+                        Last updated: {new Date(stats?.timestamp).toLocaleString()}
+                    </p>
+                </div>
+                <button
+                    onClick={fetchStats}
+                    className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50"
+                >
+                    <RefreshCw size={16} /> Refresh
+                </button>
             </div>
 
-            {/* Tenants Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                    <h2 className="text-lg font-bold text-slate-900">Manage Tenants</h2>
-                    <p className="text-sm text-slate-500 mt-1">View and manage tenant accounts</p>
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <Building2 size={24} className="text-blue-600" />
+                        </div>
+                        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                            {stats?.overview?.tenants?.active} active
+                        </span>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900">{stats?.overview?.tenants?.total || 0}</p>
+                    <p className="text-slate-500 text-sm">Total Tenants</p>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tenant Name</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Slug</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Plan</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {Array.isArray(tenants) && tenants.length > 0 ? (
-                                tenants.map((tenant) => (
-                                    <tr key={tenant._id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <p className="font-semibold text-slate-900">{tenant.name}</p>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500 text-sm font-mono">{tenant.slug}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${tenant.status === 'active'
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-amber-100 text-amber-700'
-                                                }`}>
-                                                {tenant.status === 'active' ? <CheckCircle size={12} /> : <div className="w-2 h-2 rounded-full bg-amber-500" />}
-                                                {tenant.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold capitalize border border-slate-200">
-                                                {tenant.plan}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right space-x-3">
-                                            {tenant.status !== 'active' && (
-                                                <button
-                                                    onClick={() => handleUpdateTenantStatus(tenant._id, 'active')}
-                                                    className="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors hover:underline"
-                                                >
-                                                    Approve
-                                                </button>
-                                            )}
-                                            {tenant.status !== 'suspended' && (
-                                                <button
-                                                    onClick={() => handleUpdateTenantStatus(tenant._id, 'suspended')}
-                                                    className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors hover:underline"
-                                                >
-                                                    Suspend
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
-                                        No tenants found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                            <Users size={24} className="text-purple-600" />
+                        </div>
+                        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                            {stats?.overview?.users?.active} active
+                        </span>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900">{stats?.overview?.users?.total || 0}</p>
+                    <p className="text-slate-500 text-sm">Total Users</p>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                            <Calendar size={24} className="text-emerald-600" />
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 ${stats?.growth?.bookings >= 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'
+                            }`}>
+                            {stats?.growth?.bookings >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                            {stats?.growth?.bookings}%
+                        </span>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900">{stats?.overview?.bookings?.total || 0}</p>
+                    <p className="text-slate-500 text-sm">Total Bookings</p>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                            <CreditCard size={24} className="text-amber-600" />
+                        </div>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats?.overview?.revenue?.total || 0)}</p>
+                    <p className="text-slate-500 text-sm">Total Revenue</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Quick Actions */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        {quickLinks.map((link, idx) => (
+                            <Link
+                                key={idx}
+                                href={link.href}
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            >
+                                <div className={`w-10 h-10 ${link.color} rounded-lg flex items-center justify-center`}>
+                                    <link.icon size={20} className="text-white" />
+                                </div>
+                                <span className="text-sm font-medium text-slate-700 text-center">{link.label}</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Today's Stats */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-900 mb-4">Today's Activity</h2>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <span className="text-slate-600">Bookings Today</span>
+                            <span className="font-bold text-slate-900">{stats?.overview?.bookings?.today || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <span className="text-slate-600">This Month</span>
+                            <span className="font-bold text-slate-900">{stats?.overview?.bookings?.thisMonth || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <span className="text-slate-600">Revenue (Month)</span>
+                            <span className="font-bold text-emerald-600">{formatCurrency(stats?.overview?.revenue?.thisMonth || 0)}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <span className="text-slate-600">Active Listings</span>
+                            <span className="font-bold text-slate-900">{stats?.overview?.listings?.active || 0}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* System Health */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-900 mb-4">System Health</h2>
+                    <div className="space-y-3">
+                        {Object.entries(stats?.systemHealth || {}).map(([key, status]) => (
+                            <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    {key === 'database' && <Database size={18} className="text-slate-500" />}
+                                    {key === 'cache' && <Server size={18} className="text-slate-500" />}
+                                    {key === 'queue' && <Clock size={18} className="text-slate-500" />}
+                                    {key === 'storage' && <HardDrive size={18} className="text-slate-500" />}
+                                    <span className="text-slate-700 capitalize">{key}</span>
+                                </div>
+                                <span className={`flex items-center gap-1 text-sm font-medium ${status === 'healthy' ? 'text-emerald-600' : 'text-amber-600'
+                                    }`}>
+                                    {status === 'healthy' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+                                    {status}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Bookings & Top Tenants */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Bookings */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-slate-900">Recent Bookings</h2>
+                        <Link href="/super-admin/bookings" className="text-sm text-emerald-600 font-medium hover:underline flex items-center gap-1">
+                            View All <ArrowUpRight size={14} />
+                        </Link>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                        {stats?.recentBookings?.slice(0, 5).map((booking) => (
+                            <div key={booking.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-slate-900">{booking.tenant || 'Unknown'}</p>
+                                        <p className="text-sm text-slate-500">
+                                            {new Date(booking.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-emerald-600">{formatCurrency(booking.amount)}</p>
+                                        <span className={`text-xs px-2 py-1 rounded-full ${booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
+                                                booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-slate-100 text-slate-700'
+                                            }`}>
+                                            {booking.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Top Tenants */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-slate-900">Top Tenants</h2>
+                        <Link href="/super-admin/tenants" className="text-sm text-emerald-600 font-medium hover:underline flex items-center gap-1">
+                            View All <ArrowUpRight size={14} />
+                        </Link>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                        {stats?.topTenants?.slice(0, 5).map((tenant, idx) => (
+                            <div key={tenant._id} className="p-4 hover:bg-slate-50 transition-colors flex items-center gap-4">
+                                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-sm font-bold text-slate-600">
+                                    {idx + 1}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-medium text-slate-900">{tenant.name}</p>
+                                    <p className="text-sm text-slate-500">{tenant.slug}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-slate-900">{tenant.bookingCount}</p>
+                                    <p className="text-xs text-slate-500">bookings</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

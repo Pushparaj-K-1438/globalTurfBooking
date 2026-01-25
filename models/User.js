@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
         name: { type: String, required: true },
         email: { type: String, required: true },
         mobile: { type: String },
-        password: { type: String, required: true },
+        password: { type: String, required: true, select: false },
         role: {
             type: String,
             enum: ["SUPER_ADMIN", "TENANT_OWNER", "TENANT_ADMIN", "STAFF", "CUSTOMER"],
@@ -19,6 +19,9 @@ const userSchema = new mongoose.Schema(
             },
         },
         isActive: { type: Boolean, default: true },
+        passwordResetToken: { type: String },
+        passwordResetExpires: { type: Date },
+        lastLogin: { type: Date },
         metadata: { type: Map, of: String },
     },
     { timestamps: true }

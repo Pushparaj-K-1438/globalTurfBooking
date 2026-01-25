@@ -86,7 +86,7 @@ export default function TenantDashboard() {
                 />
                 <StatCard
                     title="Occupancy Rate"
-                    value="85%"
+                    value={analytics?.overview?.occupancyRate ? `${analytics.overview.occupancyRate}%` : "0%"}
                     icon={Activity}
                     color="text-orange-600"
                     bgInfo="bg-orange-100"

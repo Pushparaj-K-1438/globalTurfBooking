@@ -2,23 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { Plus, MapPin, Edit2, Trash2, Search, X, Filter } from "lucide-react";
+import { toast } from "react-toastify";
+import DeleteConfirmationModal from "../../components/ui/DeleteModal";
 
 export default function TenantListings() {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [currentId, setCurrentId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [newListing, setNewListing] = useState({
+
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const initialFormState = {
         title: "",
         description: "",
-        type: "", // Will be set by fetchTypes
+        type: "",
         priceConfig: { basePrice: 0, pricingModel: "per_hour" },
         location: { address: "" },
         capacity: 0,
         images: [],
         amenities: [],
         rules: [],
-    });
+    };
+    const [newListing, setNewListing] = useState(initialFormState);
     const [listingTypes, setListingTypes] = useState([]);
     const [pricingModels, setPricingModels] = useState([]);
 
@@ -34,17 +45,11 @@ export default function TenantListings() {
             const data = await res.json();
             if (Array.isArray(data)) {
                 setListingTypes(data);
-                // Set default type if not set and data exists
-                if (data.length > 0) {
-                    setNewListing(prev => ({
-                        ...prev,
-                        type: prev.type || data[0].slug
-                    }));
+                if (data.length > 0 && !newListing.type) {
+                    setNewListing(prev => ({ ...prev, type: data[0].slug }));
                 }
             }
-        } catch (error) {
-            console.error("Failed to fetch types");
-        }
+        } catch (error) { console.error("Failed to fetch types"); }
     };
 
     const fetchPricingModels = async () => {
@@ -53,64 +58,106 @@ export default function TenantListings() {
             const data = await res.json();
             if (Array.isArray(data)) {
                 setPricingModels(data);
-                // Set default pricing model if available
-                if (data.length > 0) {
+                if (data.length > 0 && !newListing.priceConfig.pricingModel) {
                     setNewListing(prev => ({
                         ...prev,
-                        priceConfig: { ...prev.priceConfig, pricingModel: prev.priceConfig.pricingModel || data[0].slug }
+                        priceConfig: { ...prev.priceConfig, pricingModel: data[0].slug }
                     }));
                 }
             }
-        } catch (error) {
-            console.error("Failed to fetch pricing models");
-        }
+        } catch (error) { console.error("Failed to fetch pricing models"); }
     };
 
     const fetchListings = async () => {
         try {
             const res = await fetch("/api/listings");
             const data = await res.json();
-
-            if (res.ok && Array.isArray(data)) {
-                setListings(data);
-            } else {
-                console.error("Failed to fetch listings:", data);
-                setListings([]);
-            }
+            if (res.ok && Array.isArray(data)) setListings(data);
+            else setListings([]);
         } catch (error) {
-            console.error("Network error while fetching listings:", error);
+            console.error("Error fetching listings:", error);
             setListings([]);
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     const handleCreate = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch("/api/listings", {
-                method: "POST",
+            const url = editMode ? `/api/listings/${currentId}` : "/api/listings";
+            const method = editMode ? "PUT" : "POST";
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newListing),
             });
+
             if (res.ok) {
+                toast.success(editMode ? "Listing updated successfully" : "Listing created successfully");
                 setShowForm(false);
                 fetchListings();
-                setNewListing({
-                    title: "",
-                    description: "",
-                    type: listingTypes.length > 0 ? listingTypes[0].slug : "",
-                    priceConfig: { basePrice: 0, pricingModel: "per_hour" },
-                    location: { address: "" },
-                    capacity: 0,
-                    images: [],
-                    amenities: [],
-                    rules: [],
-                });
+                resetForm();
+            } else {
+                const errorData = await res.json();
+                toast.error(errorData.error || "Operation failed");
             }
         } catch (error) {
-            console.error("Failed to create listing");
+            console.error("Failed to save listing", error);
+            toast.error("An error occurred");
         }
+    };
+
+    const handleEdit = (listing) => {
+        setNewListing({
+            title: listing.title,
+            description: listing.description || "",
+            type: listing.type || (listingTypes.length > 0 ? listingTypes[0].slug : ""),
+            priceConfig: listing.priceConfig || { basePrice: listing.price, pricingModel: "per_hour" },
+            location: { address: listing.location?.address || "" },
+            capacity: listing.capacity || 0,
+            images: listing.images || [],
+            amenities: listing.amenities || [],
+            rules: listing.rules || [],
+        });
+        setCurrentId(listing._id);
+        setEditMode(true);
+        setShowForm(true);
+    };
+
+    const handleDelete = (id) => {
+        setDeletingId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/listings/${deletingId}`, { method: "DELETE" });
+            if (res.ok) {
+                toast.success("Listing deleted successfully");
+                fetchListings();
+                setShowDeleteModal(false);
+            } else {
+                toast.error("Failed to delete listing");
+            }
+        } catch (error) { toast.error("An error occurred"); }
+        finally {
+            setIsDeleting(false);
+            setDeletingId(null);
+        }
+    };
+
+    const resetForm = () => {
+        setNewListing(initialFormState);
+        // Reset defaults from loaded types/models if possible
+        if (listingTypes.length > 0) {
+            setNewListing(prev => ({ ...prev, type: listingTypes[0].slug }));
+        }
+        if (pricingModels.length > 0) {
+            setNewListing(prev => ({ ...prev, priceConfig: { ...prev.priceConfig, pricingModel: pricingModels[0].slug } }));
+        }
+        setEditMode(false);
+        setCurrentId(null);
     };
 
     const filteredListings = listings.filter(l =>
@@ -136,7 +183,7 @@ export default function TenantListings() {
                         <p className="text-xs text-slate-500">Manage all your properties</p>
                     </div>
                     <button
-                        onClick={() => setShowForm(true)}
+                        onClick={() => { resetForm(); setShowForm(true); }}
                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
@@ -179,7 +226,7 @@ export default function TenantListings() {
                                 <div className="aspect-video bg-slate-100 relative overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
                                     <img
-                                        src={`https://source.unsplash.com/random/800x600?${item.type}`}
+                                        src={item.images?.[0] || `https://source.unsplash.com/random/800x600?${item.type}`}
                                         alt={item.title}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         onError={(e) => e.target.style.display = 'none'}
@@ -191,7 +238,7 @@ export default function TenantListings() {
                                     </div>
                                     <div className="absolute bottom-3 left-3 z-20 text-white">
                                         <p className="font-bold text-lg leading-none">
-                                            ${item.priceConfig.basePrice}
+                                            ${item.priceConfig?.basePrice || item.price}
                                         </p>
                                         <p className="text-xs text-white/80 font-medium">per unit</p>
                                     </div>
@@ -202,14 +249,14 @@ export default function TenantListings() {
 
                                     <div className="flex items-center text-slate-500 text-xs mb-6">
                                         <MapPin className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
-                                        <span className="truncate">{item.location.address}</span>
+                                        <span className="truncate">{item.location?.address}</span>
                                     </div>
 
                                     <div className="flex gap-2 pt-4 border-t border-slate-100">
-                                        <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-600 text-sm font-medium transition-all">
+                                        <button onClick={() => handleEdit(item)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-600 text-sm font-medium transition-all">
                                             <Edit2 className="w-3.5 h-3.5" /> Edit
                                         </button>
-                                        <button className="w-10 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all">
+                                        <button onClick={() => handleDelete(item._id)} className="w-10 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all">
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -220,12 +267,21 @@ export default function TenantListings() {
                 )}
             </main>
 
-            {/* Light Theme Modal */}
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Listing"
+                message="Are you sure you want to delete this listing? This action cannot be undone."
+                isDeleting={isDeleting}
+            />
+
+            {/* Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h2 className="text-lg font-bold text-slate-900">New Listing</h2>
+                            <h2 className="text-lg font-bold text-slate-900">{editMode ? 'Edit Listing' : 'New Listing'}</h2>
                             <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
@@ -238,6 +294,7 @@ export default function TenantListings() {
                                     placeholder="e.g. Luxury Football Turf"
                                     className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                     onChange={(e) => setNewListing({ ...newListing, title: e.target.value })}
+                                    value={newListing.title}
                                     required
                                 />
                             </div>
@@ -265,6 +322,7 @@ export default function TenantListings() {
                                         placeholder="Max people"
                                         className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                         onChange={(e) => setNewListing({ ...newListing, capacity: Number(e.target.value) })}
+                                        value={newListing.capacity || ''}
                                     />
                                 </div>
                             </div>
@@ -277,6 +335,7 @@ export default function TenantListings() {
                                         placeholder="0.00"
                                         className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                         onChange={(e) => setNewListing({ ...newListing, priceConfig: { ...newListing.priceConfig, basePrice: Number(e.target.value) } })}
+                                        value={newListing.priceConfig.basePrice || ''}
                                         required
                                     />
                                 </div>
@@ -302,6 +361,7 @@ export default function TenantListings() {
                                     rows="3"
                                     className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400 resize-none"
                                     onChange={(e) => setNewListing({ ...newListing, description: e.target.value })}
+                                    value={newListing.description}
                                     required
                                 />
                             </div>
@@ -315,6 +375,7 @@ export default function TenantListings() {
                                         placeholder="Property Address"
                                         className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                         onChange={(e) => setNewListing({ ...newListing, location: { address: e.target.value } })}
+                                        value={newListing.location.address}
                                         required
                                     />
                                 </div>
@@ -327,6 +388,7 @@ export default function TenantListings() {
                                     placeholder="https://..."
                                     className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                     onChange={(e) => setNewListing({ ...newListing, images: [e.target.value] })}
+                                    value={newListing.images[0] || ''}
                                 />
                             </div>
 
@@ -338,6 +400,7 @@ export default function TenantListings() {
                                         placeholder="WiFi, Parking (comma separated)"
                                         className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                         onChange={(e) => setNewListing({ ...newListing, amenities: e.target.value.split(',').map(s => s.trim()) })}
+                                        value={newListing.amenities.join(', ')}
                                     />
                                 </div>
                                 <div>
@@ -347,6 +410,7 @@ export default function TenantListings() {
                                         placeholder="No smoking, No pets (comma separated)"
                                         className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
                                         onChange={(e) => setNewListing({ ...newListing, rules: e.target.value.split(',').map(s => s.trim()) })}
+                                        value={newListing.rules.join(', ')}
                                     />
                                 </div>
                             </div>
@@ -356,7 +420,7 @@ export default function TenantListings() {
                                     Cancel
                                 </button>
                                 <button type="submit" className="flex-1 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 shadow-sm transition-colors">
-                                    Create Listing
+                                    {editMode ? 'Update Listing' : 'Create Listing'}
                                 </button>
                             </div>
                         </form>

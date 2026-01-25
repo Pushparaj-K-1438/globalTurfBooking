@@ -59,6 +59,21 @@ export default function BrandingPage() {
         finally { setSaving(false); }
     };
 
+    const handleFileUpload = (e, field) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                toast.error("File size too large (max 2MB)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setBranding(prev => ({ ...prev, [field]: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const fonts = ["Inter", "Roboto", "Open Sans", "Lato", "Poppins", "Montserrat", "Outfit"];
 
     if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div></div>;
@@ -130,16 +145,43 @@ export default function BrandingPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Logo URL</label>
-                                <input type="text" value={branding.logo} onChange={(e) => setBranding({ ...branding, logo: e.target.value })} placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Logo</label>
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" value={branding.logo} onChange={(e) => setBranding({ ...branding, logo: e.target.value })} placeholder="https://..." className="flex-1 border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                        <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium transition-colors">
+                                            Upload
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo')} />
+                                        </label>
+                                    </div>
+                                    {branding.logo && <img src={branding.logo} alt="Preview" className="h-8 object-contain" />}
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Light Logo URL</label>
-                                <input type="text" value={branding.logoLight} onChange={(e) => setBranding({ ...branding, logoLight: e.target.value })} placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Light Logo</label>
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" value={branding.logoLight} onChange={(e) => setBranding({ ...branding, logoLight: e.target.value })} placeholder="https://..." className="flex-1 border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                        <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium transition-colors">
+                                            Upload
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logoLight')} />
+                                        </label>
+                                    </div>
+                                    {branding.logoLight && <div className="bg-slate-800 p-2 rounded"><img src={branding.logoLight} alt="Preview" className="h-8 object-contain" /></div>}
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Favicon URL</label>
-                                <input type="text" value={branding.favicon} onChange={(e) => setBranding({ ...branding, favicon: e.target.value })} placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Favicon</label>
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" value={branding.favicon} onChange={(e) => setBranding({ ...branding, favicon: e.target.value })} placeholder="https://..." className="flex-1 border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                        <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium transition-colors">
+                                            Upload
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'favicon')} />
+                                        </label>
+                                    </div>
+                                    {branding.favicon && <img src={branding.favicon} alt="Preview" className="h-8 w-8 object-contain" />}
+                                </div>
                             </div>
                         </div>
                     </div>

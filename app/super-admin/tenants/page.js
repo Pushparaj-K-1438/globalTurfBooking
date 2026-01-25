@@ -52,6 +52,21 @@ export default function TenantsPage() {
         } catch (error) { toast.error("Failed to update plan"); }
     };
 
+    const handleUpdateModules = async (id, modules) => {
+        try {
+            const res = await fetch(`/api/super-admin/tenants/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ modules }),
+            });
+            if (res.ok) {
+                toast.success("Modules properties updated");
+                fetchTenants();
+                setShowModal(false);
+            }
+        } catch (error) { toast.error("Failed to update modules"); }
+    };
+
     const getStatusIcon = (status) => {
         switch (status) {
             case 'active': return <CheckCircle size={14} className="text-emerald-600" />;
@@ -217,6 +232,34 @@ export default function TenantsPage() {
                                     <option value="enterprise">Enterprise</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Modules</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['turfs', 'hotels', 'events', 'gym', 'wellness', 'bookings', 'payments', 'reviews', 'coupons'].map(module => (
+                                        <label key={module} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedTenant.modules?.includes(module)}
+                                                onChange={(e) => {
+                                                    const newModules = e.target.checked
+                                                        ? [...(selectedTenant.modules || []), module]
+                                                        : (selectedTenant.modules || []).filter(m => m !== module);
+                                                    setSelectedTenant({ ...selectedTenant, modules: newModules });
+                                                }}
+                                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                                            />
+                                            <span className="text-sm font-medium text-slate-700 capitalize">{module}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => handleUpdateModules(selectedTenant._id, selectedTenant.modules)}
+                                    className="mt-2 w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800"
+                                >
+                                    Update Modules
+                                </button>
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Status</label>
                                 <div className="flex gap-2">

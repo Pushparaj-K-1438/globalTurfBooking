@@ -88,6 +88,12 @@ const Header = () => {
               Browse
             </Link>
             <Link
+              href="/pricing"
+              className={`text-sm font-medium transition-colors ${pathname === '/pricing' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
+            >
+              Pricing
+            </Link>
+            <Link
               href="/contact"
               className={`text-sm font-medium transition-colors ${pathname === '/contact' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
             >

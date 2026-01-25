@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, XCircle, Tag, Calendar } from "lucide-react";
 import { toast } from "react-toastify";
+import DeleteConfirmationModal from "../../components/ui/DeleteModal";
 
 export default function AdminCouponsPage() {
     const [coupons, setCoupons] = useState([]);
@@ -15,6 +16,11 @@ export default function AdminCouponsPage() {
         maxDiscount: "", minOrderValue: 0, totalUsageLimit: "", perUserLimit: 1,
         startDate: new Date().toISOString().split('T')[0], endDate: "", isActive: true
     });
+
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => { fetchCoupons(); }, []);
 
@@ -46,12 +52,27 @@ export default function AdminCouponsPage() {
         } catch (error) { toast.error("An error occurred"); }
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Delete this coupon?")) return;
+    const handleDelete = (id) => {
+        setDeletingId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
         try {
-            const res = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
-            if (res.ok) { toast.success("Coupon deleted"); fetchCoupons(); }
-        } catch (error) { toast.error("Failed to delete"); }
+            const res = await fetch(`/api/admin/coupons/${deletingId}`, { method: "DELETE" });
+            if (res.ok) {
+                toast.success("Coupon deleted");
+                fetchCoupons();
+                setShowDeleteModal(false);
+            } else {
+                toast.error("Failed to delete");
+            }
+        } catch (error) { toast.error("An error occurred"); }
+        finally {
+            setIsDeleting(false);
+            setDeletingId(null);
+        }
     };
 
     const openEdit = (item) => {
@@ -133,6 +154,15 @@ export default function AdminCouponsPage() {
                     ))}
                 </div>
             )}
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Coupon"
+                message="Are you sure you want to delete this coupon? This action cannot be undone."
+                isDeleting={isDeleting}
+            />
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
