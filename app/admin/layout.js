@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3, Palette } from 'lucide-react';
+import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3, Palette, Package } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,6 +59,7 @@ export default function AdminLayout({ children }) {
   const allNavItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, requiredModule: null }, // Always visible
     { name: 'Listings', href: '/admin/listings', icon: List, requiredModule: ['turfs', 'hotels', 'events', 'gym', 'wellness'] }, // Visible if any of these
+    { name: 'Products', href: '/admin/products', icon: Package, requiredModule: 'products' },
     { name: 'Slots', href: '/admin/slots', icon: Calendar, requiredModule: ['turfs', 'events'] }, // Mostly for time-slot based
     { name: 'Offers', href: '/admin/offers', icon: Tag, requiredModule: 'coupons' },
     { name: 'Coupons', href: '/admin/coupons', icon: Ticket, requiredModule: 'coupons' },

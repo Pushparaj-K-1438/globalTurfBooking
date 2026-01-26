@@ -19,7 +19,28 @@ export async function GET(req) {
         const limit = parseInt(searchParams.get('limit')) || 12;
 
         // Build query
-        const query = { isActive: true };
+        // STRICT TENANT ISOLATION: A listing is only visible if we are in a tenant context.
+        // We do NOT show a global aggregation of listings.
+
+        let tenantId = searchParams.get('tenantId');
+        if (!tenantId) {
+            const { getTenant } = await import("../../../../lib/tenant");
+            const tenant = await getTenant();
+            if (tenant) tenantId = tenant._id;
+        }
+
+        if (!tenantId) {
+            // Global context -> Return empty. The user wants to see Tenants only, not listings.
+            return NextResponse.json({
+                listings: [],
+                total: 0,
+                page,
+                totalPages: 0,
+                filters: { types: [], cities: [] }
+            });
+        }
+
+        const query = { isActive: true, tenantId };
 
         if (type) query.type = type;
         if (city) query['location.city'] = { $regex: city, $options: 'i' };

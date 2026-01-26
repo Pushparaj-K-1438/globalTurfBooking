@@ -116,7 +116,7 @@ const Login = () => {
                         </Link>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+                    <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 border border-slate-100">
                         <div className="text-center mb-8">
                             <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
                                 <LogIn size={32} className="text-white" />

@@ -26,6 +26,29 @@ export async function POST(req) {
             totalAmount = listing.priceConfig.basePrice * (quantity || 1);
         }
 
+        // Handle Add-ons
+        let processedAddOns = [];
+        if (Array.isArray(body.addOns) && body.addOns.length > 0) {
+            // Fetch product details to prevent price tampering
+            const productIds = body.addOns.map(a => a.productId);
+            const products = await import("../../../models/Product").then(mod => mod.default.find({ _id: { $in: productIds } }));
+
+            for (const item of body.addOns) {
+                const product = products.find(p => p._id.toString() === item.productId);
+                if (product) {
+                    const itemTotal = product.price * item.quantity;
+                    totalAmount += itemTotal;
+                    processedAddOns.push({
+                        productId: product._id,
+                        name: product.name,
+                        price: product.price,
+                        quantity: item.quantity,
+                        total: itemTotal
+                    });
+                }
+            }
+        }
+
         const booking = await Booking.create({
             bookingId: `BK-${uuidv4().substring(0, 8).toUpperCase()}`,
             tenantId: tenant._id,
@@ -36,9 +59,31 @@ export async function POST(req) {
             date,
             timeSlots,
             totalAmount,
-            finalAmount: totalAmount, // TODO: Apply coupons
+            finalAmount: totalAmount, // TODO: Apply coupons (Backend validation should be added here too)
+            addOns: processedAddOns,
             status: "pending",
         });
+
+        // Send Notification
+        try {
+            const { sendTemplatedNotification } = await import("../../../lib/notifications");
+            await sendTemplatedNotification({
+                event: 'booking_confirmed',
+                tenantId: tenant._id,
+                userEmail: customerInfo.email,
+                userPhone: customerInfo.mobile,
+                data: {
+                    name: customerInfo.name,
+                    bookingId: booking.bookingId,
+                    date: date,
+                    time: Array.isArray(timeSlots) ? timeSlots.join(", ") : "",
+                    amount: totalAmount,
+                    listing: listing.title
+                }
+            });
+        } catch (notifError) {
+            console.error("Notification trigger failed", notifError);
+        }
 
         return NextResponse.json(booking, { status: 201 });
     } catch (error) {

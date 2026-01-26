@@ -124,7 +124,7 @@ export default function RegisterTenant() {
 
                     {/* Right Side - Registration Form */}
                     <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
-                        <div className="bg-white rounded-3xl shadow-2xl p-8 relative overflow-hidden">
+                        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
                             {/* Decorative Elements */}
                             <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 rounded-full blur-3xl -z-10"></div>
 

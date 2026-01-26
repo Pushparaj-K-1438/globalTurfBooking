@@ -105,7 +105,7 @@ const DatePicker = ({ value, onChange, format = "YYYY-MM-DD" }) => {
           id="datepicker"
           type="text"
           placeholder="Pick a date"
-          className="w-full bg-[#f6f8f6] placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-12 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow"
+          className="w-full bg-[#f6f8f6] placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md pl-12 pr-4 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow"
           value={selectedDate || ""}
           readOnly
           onClick={handleToggleCalendar}

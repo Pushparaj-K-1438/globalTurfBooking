@@ -235,7 +235,7 @@ export default function TenantsPage() {
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Modules</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {['turfs', 'hotels', 'events', 'gym', 'wellness', 'bookings', 'payments', 'reviews', 'coupons'].map(module => (
+                                    {['turfs', 'hotels', 'events', 'gym', 'wellness', 'bookings', 'payments', 'reviews', 'coupons', 'products'].map(module => (
                                         <label key={module} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
                                             <input
                                                 type="checkbox"

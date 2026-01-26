@@ -11,25 +11,20 @@ function CheckoutContent() {
     const slotId = searchParams.get('slotId');
     const couponCode = searchParams.get('coupon');
 
-    const [slot, setSlot] = useState(null);
-    const [listing, setListing] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState(false);
-    const [couponData, setCouponData] = useState(null);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-    });
+    const [products, setProducts] = useState([]);
+    const [selectedAddOns, setSelectedAddOns] = useState({}); // { productId: qty }
 
     useEffect(() => {
         if (slotId) fetchSlotDetails();
     }, [slotId]);
 
     useEffect(() => {
+        if (listing?.tenantId) fetchProducts();
+    }, [listing]);
+
+    useEffect(() => {
         if (slot && couponCode) applyCoupon();
-    }, [slot, couponCode]);
+    }, [slot, couponCode, selectedAddOns]); // Re-calculate coupon if total changes? usually add-ons might be excluded or included. simpler to re-validate.
 
     const fetchSlotDetails = async () => {
         try {
@@ -46,15 +41,45 @@ function CheckoutContent() {
         finally { setLoading(false); }
     };
 
+    const fetchProducts = async () => {
+        try {
+            // Fetch products for this tenant
+            const tenantId = listing?.tenantId?._id || listing?.tenantId;
+            const res = await fetch(`/api/public/products?tenantId=${tenantId}`);
+            const data = await res.json();
+            if (Array.isArray(data)) setProducts(data);
+        } catch (error) { console.error("Failed to fetch products"); }
+    };
+
+    const handleAddOnToggle = (product, qty) => {
+        const newAddOns = { ...selectedAddOns };
+        if (qty > 0) {
+            newAddOns[product._id] = qty;
+        } else {
+            delete newAddOns[product._id];
+        }
+        setSelectedAddOns(newAddOns);
+    };
+
+    const getAddOnsTotal = () => {
+        let total = 0;
+        Object.entries(selectedAddOns).forEach(([pid, qty]) => {
+            const product = products.find(p => p._id === pid);
+            if (product) total += product.price * qty;
+        });
+        return total;
+    };
+
     const applyCoupon = async () => {
         if (!couponCode || !slot) return;
         try {
+            const orderValue = slot.price + getAddOnsTotal();
             const res = await fetch("/api/coupons/validate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     code: couponCode,
-                    orderValue: slot.price,
+                    orderValue: orderValue,
                     listingId: slot.listingId,
                 }),
             });
@@ -72,20 +97,46 @@ function CheckoutContent() {
 
         setProcessing(true);
         try {
+            const addOnsTotal = getAddOnsTotal();
+            const subtotal = slot.price + addOnsTotal;
+
+            // Prepare addOns array
+            const addOnsPayload = Object.entries(selectedAddOns).map(([pid, qty]) => {
+                const product = products.find(p => p._id === pid);
+                return {
+                    productId: pid,
+                    name: product.name,
+                    price: product.price,
+                    quantity: qty,
+                    total: product.price * qty
+                };
+            });
+
+            // Recalculate everything to be safe
+            let discount = 0;
+            if (couponData?.valid) {
+                // Re-validate logic strictly if needed, but assuming couponData is fresh
+                discount = couponData.discount;
+            }
+            const finalAmount = Math.max(0, subtotal - discount);
+
             const bookingData = {
                 slotId: slot._id,
                 listingId: slot.listingId,
                 tenantId: listing?.tenantId?._id || listing?.tenantId,
+                date: slot.date,
+                timeSlots: [slot.startTime],
                 customerInfo: {
                     name: formData.name,
                     email: formData.email,
-                    phone: formData.phone,
+                    mobile: formData.phone,
                 },
                 notes: formData.notes,
                 couponCode: couponData?.coupon?.code,
-                totalAmount: slot.price,
-                finalAmount: couponData?.finalAmount || slot.price,
-                discount: couponData?.discount || 0,
+                totalAmount: subtotal,
+                finalAmount: finalAmount,
+                discount: discount,
+                addOns: addOnsPayload
             };
 
             const res = await fetch("/api/bookings", {
@@ -118,7 +169,9 @@ function CheckoutContent() {
         </div>
     );
 
-    const finalAmount = couponData?.finalAmount || slot.price;
+    const addOnsTotal = getAddOnsTotal();
+    const subtotal = slot.price + addOnsTotal;
+    const finalAmount = couponData ? Math.max(0, subtotal - couponData.discount) : subtotal;
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans pt-16">
@@ -139,6 +192,51 @@ function CheckoutContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Booking Form */}
                     <div className="lg:col-span-2 space-y-6">
+
+                        {/* Add-ons Section */}
+                        {products.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                                <h2 className="text-lg font-bold text-slate-900 mb-4">Extras & Add-ons</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {products.map(product => {
+                                        const qty = selectedAddOns[product._id] || 0;
+                                        return (
+                                            <div key={product._id} className={`p-4 rounded-xl border transition-all cursor-pointer ${qty > 0 ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500/20' : 'border-slate-200 hover:border-emerald-200'}`}>
+                                                <div className="flex gap-3">
+                                                    <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                                                        {product.images?.[0] ? (
+                                                            <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">No img</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-slate-900 text-sm line-clamp-1">{product.name}</h3>
+                                                        <p className="text-emerald-600 font-bold text-sm">₹{product.price}</p>
+                                                        {qty === 0 ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAddOnToggle(product, 1)}
+                                                                className="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-full hover:bg-emerald-50 transition-colors"
+                                                            >
+                                                                Add +
+                                                            </button>
+                                                        ) : (
+                                                            <div className="mt-2 flex items-center gap-3">
+                                                                <button type="button" onClick={() => handleAddOnToggle(product, Math.max(0, qty - 1))} className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200">-</button>
+                                                                <span className="text-sm font-bold text-slate-900 w-4 text-center">{qty}</span>
+                                                                <button type="button" onClick={() => handleAddOnToggle(product, qty + 1)} className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200">+</button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Contact Info */}
                         <form onSubmit={handleSubmit}>
                             <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
@@ -183,10 +281,6 @@ function CheckoutContent() {
                             <button type="submit" disabled={processing} className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg">
                                 {processing ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : <><Shield size={20} /> Confirm & Pay ₹{finalAmount}</>}
                             </button>
-
-                            <p className="text-xs text-slate-500 text-center mt-4 flex items-center justify-center gap-1">
-                                <Shield size={14} /> Your payment information is secure and encrypted
-                            </p>
                         </form>
                     </div>
 
@@ -221,7 +315,19 @@ function CheckoutContent() {
                             {/* Price Breakdown */}
                             <div className="pt-4 space-y-2 text-sm">
                                 <div className="flex justify-between"><span className="text-slate-500">Slot Price</span><span className="font-medium">₹{slot.price}</span></div>
-                                {couponData && (
+
+                                {Object.entries(selectedAddOns).map(([pid, qty]) => {
+                                    const product = products.find(p => p._id === pid);
+                                    if (!product) return null;
+                                    return (
+                                        <div key={pid} className="flex justify-between">
+                                            <span className="text-slate-500">{product.name} x {qty}</span>
+                                            <span className="font-medium">₹{product.price * qty}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                {couponData && subtotal > 0 && (
                                     <div className="flex justify-between text-emerald-600">
                                         <span>Discount ({couponData.coupon.code})</span>
                                         <span>-₹{couponData.discount}</span>

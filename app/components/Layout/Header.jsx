@@ -94,6 +94,12 @@ const Header = () => {
               Pricing
             </Link>
             <Link
+              href="/shop"
+              className={`text-sm font-medium transition-colors ${pathname === '/shop' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
+            >
+              Shop
+            </Link>
+            <Link
               href="/contact"
               className={`text-sm font-medium transition-colors ${pathname === '/contact' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
             >

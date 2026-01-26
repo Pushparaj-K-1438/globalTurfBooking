@@ -160,6 +160,21 @@ export default function TenantListings() {
         setCurrentId(null);
     };
 
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("File size too large (max 2MB)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewListing(prev => ({ ...prev, images: [reader.result] }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const filteredListings = listings.filter(l =>
         l.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -383,13 +398,19 @@ export default function TenantListings() {
 
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Image URL</label>
-                                <input
-                                    type="text"
-                                    placeholder="https://..."
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
-                                    onChange={(e) => setNewListing({ ...newListing, images: [e.target.value] })}
-                                    value={newListing.images[0] || ''}
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="https://..."
+                                        className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-400"
+                                        onChange={(e) => setNewListing({ ...newListing, images: [e.target.value] })}
+                                        value={newListing.images[0] || ''}
+                                    />
+                                    <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center whitespace-nowrap">
+                                        Upload
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

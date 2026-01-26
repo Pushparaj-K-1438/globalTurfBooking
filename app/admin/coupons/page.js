@@ -192,7 +192,7 @@ export default function AdminCouponsPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Value</label>
-                                    <input type="number" value={formData.discountValue} onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) })} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" required />
+                                    <input type="number" value={formData.discountValue} onChange={(e) => setFormData({ ...formData, discountValue: e.target.value === '' ? '' : parseFloat(e.target.value) })} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" required />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Max Discount</label>
@@ -212,7 +212,7 @@ export default function AdminCouponsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Min Order Value</label>
-                                    <input type="number" value={formData.minOrderValue} onChange={(e) => setFormData({ ...formData, minOrderValue: parseFloat(e.target.value) })} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
+                                    <input type="number" value={formData.minOrderValue} onChange={(e) => setFormData({ ...formData, minOrderValue: e.target.value === '' ? '' : parseFloat(e.target.value) })} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Usage Limit</label>

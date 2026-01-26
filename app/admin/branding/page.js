@@ -79,7 +79,7 @@ export default function BrandingPage() {
     if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div></div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-8">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-4 sm:p-6 lg:p-8">
             <header className="mb-10 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Brand Customization</h1>
@@ -98,7 +98,7 @@ export default function BrandingPage() {
                             <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl"><Palette size={20} /></div>
                             <h2 className="text-lg font-bold text-slate-900">Colors</h2>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {[
                                 { key: 'primaryColor', label: 'Primary' },
                                 { key: 'secondaryColor', label: 'Secondary' },
@@ -113,13 +113,13 @@ export default function BrandingPage() {
                                             type="color"
                                             value={branding[key]}
                                             onChange={(e) => setBranding({ ...branding, [key]: e.target.value })}
-                                            className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer"
+                                            className="w-14 h-11 p-1 rounded-lg border border-slate-200 cursor-pointer shrink-0 bg-white"
                                         />
                                         <input
                                             type="text"
                                             value={branding[key]}
                                             onChange={(e) => setBranding({ ...branding, [key]: e.target.value })}
-                                            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                            className="flex-1 min-w-0 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                                         />
                                     </div>
                                 </div>
@@ -143,7 +143,7 @@ export default function BrandingPage() {
                             <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl"><ImageIcon size={20} /></div>
                             <h2 className="text-lg font-bold text-slate-900">Logos & Media</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-6">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Logo</label>
                                 <div className="space-y-2">

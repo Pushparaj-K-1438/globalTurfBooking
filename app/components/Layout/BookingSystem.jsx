@@ -269,7 +269,7 @@ const BookingSystem = () => {
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
 
         {/* Header Banner */}
-        <div className="bg-slate-50 border-b border-slate-200 p-8 text-center">
+        <div className="bg-slate-50 border-b border-slate-200 p-6 sm:p-8 text-center">
           <h2 className='text-3xl font-bold text-slate-900 mb-2'>Book Your Slot</h2>
           <p className="text-slate-500">Select your preferred date and time to get started.</p>
         </div>
@@ -282,7 +282,7 @@ const BookingSystem = () => {
           </div>
         )}
 
-        <div className="p-8 md:p-10">
+        <div className="p-4 sm:p-6 md:p-10">
           <form className='flex flex-col gap-10' onSubmit={handleSubmit}>
 
             {/* 1. Pick Date */}
@@ -309,7 +309,7 @@ const BookingSystem = () => {
                     <Loader2 className="animate-spin text-emerald-600" size={32} />
                   </div>
                 ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 small-mobile:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {availableSlots
                       .filter(slot => slot.isActive)
                       .map((slot) => {
@@ -417,7 +417,7 @@ const BookingSystem = () => {
             </div>
 
             {/* Summary Section */}
-            <div className="border border-slate-200 bg-slate-50/50 rounded-2xl p-6 md:p-8 mt-4">
+            <div className="border border-slate-200 bg-slate-50/50 rounded-2xl p-4 sm:p-6 md:p-8 mt-4">
               <h4 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h4>
 
               <div className="space-y-3 text-sm">

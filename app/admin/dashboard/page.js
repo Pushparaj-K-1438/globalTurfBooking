@@ -51,7 +51,7 @@ export default function TenantDashboard() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-8">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-4 sm:p-6 lg:p-8">
             <header className="mb-10">
                 <h1 className="text-2xl font-bold text-slate-900">
                     Business Dashboard
@@ -96,7 +96,7 @@ export default function TenantDashboard() {
 
             {/* Top Listings */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                <div className="p-6 sm:p-8 border-b border-slate-100 flex justify-between items-center">
                     <h2 className="text-lg font-bold text-slate-900">Top Performing Listings</h2>
                     <button className="text-emerald-600 text-sm font-medium hover:text-emerald-700 transition-colors">View All</button>
                 </div>

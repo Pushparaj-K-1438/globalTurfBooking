@@ -20,10 +20,15 @@ export default function SuperAdminDashboard() {
         setLoading(true);
         try {
             const res = await fetch('/api/super-admin/platform/stats');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.details || errData.error || `API call failed with status ${res.status}`);
+            }
             const data = await res.json();
             setStats(data);
         } catch (error) {
             console.error("Failed to fetch stats:", error);
+            // setStats(null); // Keep previous stats or null
         } finally {
             setLoading(false);
         }
@@ -59,7 +64,7 @@ export default function SuperAdminDashboard() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Platform Dashboard</h1>
                     <p className="text-slate-500">
-                        Last updated: {new Date(stats?.timestamp).toLocaleString()}
+                        Last updated: {stats?.timestamp ? new Date(stats.timestamp).toLocaleString() : 'Not available'}
                     </p>
                 </div>
                 <button
@@ -214,8 +219,8 @@ export default function SuperAdminDashboard() {
                                     <div className="text-right">
                                         <p className="font-bold text-emerald-600">{formatCurrency(booking.amount)}</p>
                                         <span className={`text-xs px-2 py-1 rounded-full ${booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
-                                                booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-slate-100 text-slate-700'
+                                            booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-700'
                                             }`}>
                                             {booking.status}
                                         </span>

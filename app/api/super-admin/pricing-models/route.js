@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectDB from "../../../../lib/mongoose";
 import PricingModel from "../../../../models/PricingModel";
 
+console.log("Loading pricing-models route");
+
 const createSlug = (text) => {
     return text
         .toString()
@@ -14,11 +16,16 @@ const createSlug = (text) => {
 
 // GET: List all pricing models
 export async function GET() {
+    console.log("GET /api/super-admin/pricing-models: Started");
     try {
+        console.log("GET /api/super-admin/pricing-models: Connecting DB...");
         await connectDB();
+        console.log("GET /api/super-admin/pricing-models: DB Connected. Fetching models...");
         const models = await PricingModel.find({}).sort({ createdAt: -1 });
+        console.log(`GET /api/super-admin/pricing-models: Found ${models.length} models`);
         return NextResponse.json(models);
     } catch (error) {
+        console.error("GET /api/super-admin/pricing-models: Failed", error);
         return NextResponse.json({ error: "Failed to fetch pricing models" }, { status: 500 });
     }
 }

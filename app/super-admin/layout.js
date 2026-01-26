@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Layers, Users, LogOut, Menu, X, ShieldCheck, DollarSign, Check, Globe, Receipt, Shield, Tag, Star, Bell } from 'lucide-react';
+import { LayoutDashboard, Layers, Users, LogOut, Menu, X, ShieldCheck, DollarSign, Check, Globe, Receipt, Shield, Tag, Star, Bell, Calendar } from 'lucide-react';
 
 export default function SuperAdminLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,6 +40,7 @@ export default function SuperAdminLayout({ children }) {
 
     const navItems = [
         { name: 'Dashboard', href: '/super-admin/dashboard', icon: LayoutDashboard },
+        { name: 'Bookings', href: '/super-admin/bookings', icon: Calendar },
         { name: 'Tenants', href: '/super-admin/tenants', icon: Users },
         { name: 'Listing Types', href: '/super-admin/types', icon: Layers },
         { name: 'Pricing Models', href: '/super-admin/pricing-models', icon: DollarSign },

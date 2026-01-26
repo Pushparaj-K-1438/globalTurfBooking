@@ -19,7 +19,7 @@ const tenantSchema = new mongoose.Schema(
     modules: [
       {
         type: String,
-        enum: ["turfs", "hotels", "resorts", "events", "coworking", "payments", "coupons", "reviews", "notifications"],
+        enum: ["turfs", "hotels", "resorts", "events", "coworking", "payments", "coupons", "reviews", "notifications", "products", "gym", "wellness", "bookings"],
       },
     ],
     settings: {

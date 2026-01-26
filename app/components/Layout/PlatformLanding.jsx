@@ -5,7 +5,8 @@ import { Search, MapPin, Calendar, Star, Shield, Zap, Globe, Users, Building2, A
 import { useState, useEffect } from "react";
 
 export default function PlatformLanding() {
-    const [featuredListings, setFeaturedListings] = useState([]);
+    const [featuredTenants, setFeaturedTenants] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchFeatured();
@@ -13,10 +14,11 @@ export default function PlatformLanding() {
 
     const fetchFeatured = async () => {
         try {
-            const res = await fetch('/api/public/listings?limit=4&sortBy=rating');
+            const res = await fetch('/api/public/tenants');
             const data = await res.json();
-            if (data.listings) setFeaturedListings(data.listings);
-        } catch (error) { console.error("Failed to fetch featured"); }
+            if (data.tenants) setFeaturedTenants(data.tenants);
+        } catch (error) { console.error("Failed to fetch featured tenants"); }
+        finally { setLoading(false); }
     };
 
     const features = [
@@ -107,42 +109,43 @@ export default function PlatformLanding() {
                 </div>
             </section>
 
-            {/* Featured Listings */}
-            {featuredListings.length > 0 && (
+            {/* Featured Partners */}
+            {featuredTenants.length > 0 && (
                 <section className="py-20">
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex items-end justify-between mb-10">
                             <div>
-                                <h2 className="text-3xl font-bold text-slate-900 mb-2">Popular Venues</h2>
-                                <p className="text-slate-500">Discover top-rated venues across categories</p>
+                                <h2 className="text-3xl font-bold text-slate-900 mb-2">Our Trusted Partners</h2>
+                                <p className="text-slate-500">Businesses powering their growth with us</p>
                             </div>
-                            <Link href="/browse" className="text-emerald-600 font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                                View All <ChevronRight size={18} />
-                            </Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {featuredListings.map(listing => (
-                                <Link key={listing._id} href={`/listings/${listing.slug || listing._id}`} className="group">
-                                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                        <div className="relative h-48 bg-slate-200">
-                                            {listing.images?.[0] ? (
-                                                <img src={listing.images[0]?.url || listing.images[0]} alt={listing.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            {featuredTenants.map(tenant => (
+                                <a key={tenant._id} href={`http://${tenant.slug}.localhost:3000`} className="group">
+                                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                                        <div className="h-32 bg-slate-100 flex items-center justify-center p-6 relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 group-hover:scale-110 transition-transform duration-500"></div>
+                                            {tenant.settings?.logo ? (
+                                                <img src={tenant.settings.logo} alt={tenant.name} className="h-16 w-auto object-contain relative z-10" />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-blue-500"></div>
+                                                <div className="w-16 h-16 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-2xl font-bold relative z-10 shadow-lg">
+                                                    {tenant.name.charAt(0)}
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="p-4">
-                                            <h3 className="font-bold text-slate-900 mb-1 line-clamp-1">{listing.title}</h3>
-                                            <p className="text-sm text-slate-500 flex items-center gap-1 mb-2"><MapPin size={12} /> {listing.location?.city || 'Location'}</p>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-lg font-bold text-emerald-600">₹{listing.priceConfig?.basePrice}/hr</span>
-                                                {listing.averageRating > 0 && (
-                                                    <span className="flex items-center gap-1 text-sm"><Star size={14} className="text-amber-400 fill-amber-400" /> {listing.averageRating}</span>
-                                                )}
+                                        <div className="p-6 flex-1 flex flex-col">
+                                            <h3 className="font-bold text-slate-900 mb-2 text-lg">{tenant.name}</h3>
+                                            <p className="text-sm text-slate-500 mb-4 font-mono">@{tenant.slug}</p>
+
+                                            <div className="mt-auto flex flex-wrap gap-2">
+                                                {tenant.modules?.slice(0, 3).map(mod => (
+                                                    <span key={mod} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md capitalize font-medium">{mod}</span>
+                                                ))}
+                                                {tenant.modules?.length > 3 && <span className="px-2 py-1 bg-slate-100 text-slate-400 text-xs rounded-md">+{(tenant.modules.length - 3)}</span>}
                                             </div>
                                         </div>
                                     </div>
-                                </Link>
+                                </a>
                             ))}
                         </div>
                     </div>

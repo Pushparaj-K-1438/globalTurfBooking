@@ -21,12 +21,24 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    listingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Listing',
+      index: true
+    },
     appliedOffer: {
       offerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer' },
       name: { type: String },
       discountType: { type: String },
       discountValue: { type: Number },
     },
+    addOns: [{
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      name: String,
+      price: Number,
+      quantity: Number,
+      total: Number
+    }],
   },
   { timestamps: true }
 );

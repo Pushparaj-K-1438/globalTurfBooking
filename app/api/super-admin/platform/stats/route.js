@@ -1,30 +1,29 @@
 import { NextResponse } from "next/server";
 import connectDB from "../../../../../lib/mongoose";
 import { verifySession } from "../../../../../lib/session";
+import Tenant from "../../../../../models/Tenant";
+import User from "../../../../../models/User";
+import Booking from "../../../../../models/booking";
+import Listing from "../../../../../models/Listing";
+import Payment from "../../../../../models/Payment";
 
-// Platform health and statistics endpoint for Super Admin
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
+    console.log("Super Admin Stats API Hit (Rebuilt)");
     try {
         const session = await verifySession(req);
-        if (session.user.role !== 'SUPER_ADMIN') {
+        if (!session || session.role !== 'SUPER_ADMIN') {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
         await connectDB();
-
-        // Import models dynamically
-        const Tenant = (await import('../../../../../models/Tenant')).default;
-        const User = (await import('../../../../../models/User')).default;
-        const Booking = (await import('../../../../../models/booking')).default;
-        const Listing = (await import('../../../../../models/listing')).default;
-        const Payment = (await import('../../../../../models/Payment')).default;
 
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-        // Parallel queries for performance
         const [
             totalTenants,
             activeTenants,
@@ -61,7 +60,6 @@ export async function GET(req) {
             ])
         ]);
 
-        // Calculate growth rates
         const lastMonthBookings = await Booking.countDocuments({
             createdAt: { $gte: lastMonth, $lt: thisMonth },
             status: { $ne: 'CANCELLED' }
@@ -70,7 +68,6 @@ export async function GET(req) {
             ? ((monthBookings - lastMonthBookings) / lastMonthBookings * 100).toFixed(1)
             : 100;
 
-        // System health metrics
         const systemHealth = {
             database: 'healthy',
             cache: 'healthy',
@@ -105,6 +102,6 @@ export async function GET(req) {
         });
     } catch (error) {
         console.error("Error fetching platform stats:", error);
-        return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch stats", details: error.message, stack: error.stack }, { status: 500 });
     }
 }
