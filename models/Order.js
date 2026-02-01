@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
     {
+        orderId: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
         tenantId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Tenant",
@@ -11,12 +16,12 @@ const orderSchema = new mongoose.Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
         },
 
         // Cart Items
         items: [{
             product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+            productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // Alias
             booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }, // If it's a booking
             name: String,
             price: { type: Number, required: true },
@@ -29,6 +34,7 @@ const orderSchema = new mongoose.Schema(
         subtotal: { type: Number, required: true },
         tax: { type: Number, default: 0 },
         discount: { type: Number, default: 0 },
+        shippingCost: { type: Number, default: 0 },
         totalAmount: { type: Number, required: true },
         currency: { type: String, default: 'INR' },
 
@@ -41,22 +47,44 @@ const orderSchema = new mongoose.Schema(
         paymentMethod: { type: String }, // 'razorpay', 'stripe', 'cash'
         paymentId: { type: String },
 
-        // Order Status
+        // Order Status (extended for e-commerce)
         status: {
             type: String,
-            enum: ['pending', 'processing', 'completed', 'cancelled'],
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled', 'refunded'],
             default: 'pending'
         },
 
-        // Customer Info (Snapshot)
+        // Shipping Details
+        trackingNumber: { type: String },
+        shippedAt: { type: Date },
+        deliveredAt: { type: Date },
+
+        // Customer Info
+        customerName: { type: String },
+        customerEmail: { type: String },
+        customerPhone: { type: String },
         customerDetails: {
             name: String,
             email: String,
             phone: String,
         },
 
-        // Shipping/Billing (simplified for now)
-        shippingAddress: { type: Map, of: String },
+        // Shipping/Billing Address
+        shippingAddress: {
+            street: { type: String },
+            city: { type: String },
+            state: { type: String },
+            postalCode: { type: String },
+            country: { type: String, default: 'India' }
+        },
+
+        // Coupon
+        couponCode: { type: String },
+        couponDiscount: { type: Number, default: 0 },
+
+        // Notes
+        customerNote: { type: String },
+        adminNote: { type: String }
     },
     { timestamps: true }
 );

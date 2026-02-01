@@ -13,7 +13,7 @@ export async function GET(req) {
     let tenant = null;
     if (session.tenantId) {
         await connectDB();
-        tenant = await Tenant.findById(session.tenantId).select('name slug modules status plan').lean();
+        tenant = await Tenant.findById(session.tenantId).select('name slug modules status plan settings').lean();
     }
 
     return NextResponse.json({

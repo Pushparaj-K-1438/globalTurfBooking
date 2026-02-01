@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, deleteSession } from "./lib/session";
 
-const publicPaths = ['/login', '/register', '/register-tenant', '/forgot-password'];
+const publicPaths = ['/login', '/register', '/register-tenant', '/forgot-password', '/v'];
 const authPaths = ['/auth', '/admin', '/super-admin'];
 
 function isPublicPath(path) {
@@ -59,8 +59,9 @@ export default async function middleware(request) {
             return NextResponse.redirect(url);
         }
 
-        // If user is logged in and tries to access public pages, redirect to dashboard
-        if (isPublic && session?.userId) {
+        // If user is logged in and tries to access auth entry pages, redirect to dashboard
+        const isAuthEntryPage = ['/login', '/register', '/register-tenant', '/forgot-password'].some(p => pathname.startsWith(p));
+        if (isAuthEntryPage && session?.userId) {
             if (session.role === 'SUPER_ADMIN') {
                 return NextResponse.redirect(new URL('/super-admin/dashboard', request.url));
             } else {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3, Palette, Package } from 'lucide-react';
+import { Calendar, Tag, LogOut, Menu, X, LayoutDashboard, List, Star, Ticket, Settings, Users, BarChart3, Palette, Package, ShoppingCart, CalendarCheck, Hotel, Dumbbell, Heart, PartyPopper, Boxes, CalendarDays, PieChart } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -57,10 +57,19 @@ export default function AdminLayout({ children }) {
   };
 
   const allNavItems = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, requiredModule: null }, // Always visible
-    { name: 'Listings', href: '/admin/listings', icon: List, requiredModule: ['turfs', 'hotels', 'events', 'gym', 'wellness'] }, // Visible if any of these
+    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, requiredModule: null },
+    { name: 'Listings', href: '/admin/listings', icon: List, requiredModule: ['turfs'] },
+    { name: 'Hotels', href: '/admin/hotels', icon: Hotel, requiredModule: 'hotels' },
+    { name: 'Events', href: '/admin/events', icon: PartyPopper, requiredModule: 'events' },
+    { name: 'Gym', href: '/admin/gym', icon: Dumbbell, requiredModule: 'gym' },
+    { name: 'Wellness', href: '/admin/wellness', icon: Heart, requiredModule: 'wellness' },
+    { name: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, requiredModule: 'bookings' },
+    { name: 'Calendar', href: '/admin/calendar', icon: CalendarDays, requiredModule: 'bookings' },
+    { name: 'Reports', href: '/admin/reports', icon: PieChart, requiredModule: null },
     { name: 'Products', href: '/admin/products', icon: Package, requiredModule: 'products' },
-    { name: 'Slots', href: '/admin/slots', icon: Calendar, requiredModule: ['turfs', 'events'] }, // Mostly for time-slot based
+    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart, requiredModule: 'products' },
+    { name: 'Inventory', href: '/admin/inventory', icon: Boxes, requiredModule: 'products' },
+    { name: 'Slots', href: '/admin/slots', icon: Calendar, requiredModule: ['turfs', 'events'] },
     { name: 'Offers', href: '/admin/offers', icon: Tag, requiredModule: 'coupons' },
     { name: 'Coupons', href: '/admin/coupons', icon: Ticket, requiredModule: 'coupons' },
     { name: 'Reviews', href: '/admin/reviews', icon: Star, requiredModule: 'reviews' },
@@ -155,6 +164,38 @@ export default function AdminLayout({ children }) {
 
       {/* Main content wrapper */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+        {/* Top Header Bar */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-slate-900 hidden md:block">
+              {navItems.find(item => item.href === pathname)?.name || 'Dashboard'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                </svg>
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  3
+                </span>
+              </button>
+            </div>
+            {/* User Avatar */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                {tenantName?.charAt(0)?.toUpperCase() || 'A'}
+              </div>
+              <div className="hidden md:block">
+                <p className="text-sm font-medium text-slate-900">{tenantName}</p>
+                <p className="text-xs text-slate-500">Admin</p>
+              </div>
+            </div>
+          </div>
+        </header>
         <main className="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           {children}
         </main>

@@ -29,16 +29,25 @@ export async function PUT(req) {
         }
 
         await connectDB();
-        const settings = await req.json();
+        const body = await req.json();
+        const { settings, modules } = body;
+
+        const updateData = {};
+        if (settings) updateData.settings = settings;
+        if (modules) updateData.modules = modules;
 
         const tenant = await Tenant.findByIdAndUpdate(
             session.tenantId,
-            { $set: { settings: settings } },
+            { $set: updateData },
             { new: true }
         );
 
-        return NextResponse.json(tenant.settings);
+        return NextResponse.json({
+            settings: tenant.settings,
+            modules: tenant.modules
+        });
     } catch (error) {
+        console.error("Error updating settings:", error);
         return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
     }
 }

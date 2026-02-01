@@ -12,8 +12,8 @@ const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Hide header on admin and auth routes
-  const isExcludedRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/super-admin');
+  // Hide header on admin, super-admin, and tenant site routes
+  const isExcludedRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/super-admin') || pathname?.startsWith('/v/');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,23 +81,44 @@ const Header = () => {
             >
               Home
             </Link>
-            <Link
-              href="/browse"
-              className={`text-sm font-medium transition-colors ${pathname === '/browse' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
-            >
-              Browse
-            </Link>
+
+            {/* Browse Dropdown */}
+            <div className="relative group">
+              <button className={`text-sm font-medium transition-colors flex items-center gap-1 ${pathname?.startsWith('/browse') || pathname?.startsWith('/hotels') || pathname?.startsWith('/events') || pathname?.startsWith('/gyms') || pathname?.startsWith('/wellness') ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}>
+                Browse
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-2 min-w-[180px]">
+                  <Link href="/browse" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    <Search size={16} /> All Venues
+                  </Link>
+                  <Link href="/hotels" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    🏨 Hotels
+                  </Link>
+                  <Link href="/events" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    🎉 Events
+                  </Link>
+                  <Link href="/gyms" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    💪 Gyms
+                  </Link>
+                  <Link href="/wellness" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    🧘 Wellness
+                  </Link>
+                  <Link href="/shop" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 text-sm font-medium">
+                    🛒 Shop
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             <Link
               href="/pricing"
               className={`text-sm font-medium transition-colors ${pathname === '/pricing' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
             >
               Pricing
-            </Link>
-            <Link
-              href="/shop"
-              className={`text-sm font-medium transition-colors ${pathname === '/shop' ? 'text-emerald-600' : 'text-slate-600 hover:text-emerald-600'}`}
-            >
-              Shop
             </Link>
             <Link
               href="/contact"

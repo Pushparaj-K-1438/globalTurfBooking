@@ -23,19 +23,67 @@ const tenantSchema = new mongoose.Schema(
       },
     ],
     settings: {
-      theme: {
-        primaryColor: { type: String, default: "#000000" },
-        logo: { type: String },
+      businessType: {
+        type: String,
+        enum: ["turf", "hotel", "events", "gym", "wellness", "ecommerce", "multi"],
+        default: "turf"
       },
-      currency: { type: String, default: "USD" },
-      timezone: { type: String, default: "UTC" },
+      theme: {
+        primaryColor: { type: String, default: "#10b981" },
+        secondaryColor: { type: String, default: "#0f172a" },
+        logo: { type: String },
+        favicon: { type: String },
+      },
+      currency: { type: String, default: "INR" },
+      timezone: { type: String, default: "Asia/Kolkata" },
+      contact: {
+        email: String,
+        phone: String,
+        address: String,
+      },
+
+      // Integration Settings
+      payment: {
+        razorpayKeyId: String,
+        razorpayKeySecret: String,
+        stripePublishableKey: String,
+        stripeSecretKey: String,
+        enabled: { type: Boolean, default: false }
+      },
+      sms: {
+        provider: { type: String, default: "twilio" },
+        apiKey: String,
+        senderId: String,
+        enabled: { type: Boolean, default: false }
+      },
+      email: {
+        smtpHost: String,
+        smtpPort: String,
+        smtpUser: String,
+        smtpPass: String,
+        enabled: { type: Boolean, default: false }
+      },
+      whatsapp: {
+        provider: { type: String, default: "meta" },
+        phoneNumberId: String,
+        accessToken: String,
+        businessAccountId: String,
+        enabled: { type: Boolean, default: false }
+      },
+      push: {
+        provider: { type: String, default: "firebase" },
+        projectId: String,
+        privateKey: String,
+        clientEmail: String,
+        enabled: { type: Boolean, default: false }
+      }
     },
     subscription: {
       startDate: { type: Date },
       endDate: { type: Date },
     },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 tenantSchema.index({ slug: 1 });

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Layers, Users, LogOut, Menu, X, ShieldCheck, DollarSign, Check, Globe, Receipt, Shield, Tag, Star, Bell, Calendar } from 'lucide-react';
+import { LayoutDashboard, Layers, Users, UserCheck, LogOut, Menu, X, ShieldCheck, DollarSign, Check, Globe, Receipt, Shield, Tag, Star, Bell, Calendar, FileText, Settings } from 'lucide-react';
 
 export default function SuperAdminLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,6 +42,7 @@ export default function SuperAdminLayout({ children }) {
         { name: 'Dashboard', href: '/super-admin/dashboard', icon: LayoutDashboard },
         { name: 'Bookings', href: '/super-admin/bookings', icon: Calendar },
         { name: 'Tenants', href: '/super-admin/tenants', icon: Users },
+        { name: 'Users', href: '/super-admin/users', icon: UserCheck },
         { name: 'Listing Types', href: '/super-admin/types', icon: Layers },
         { name: 'Pricing Models', href: '/super-admin/pricing-models', icon: DollarSign },
         { name: 'Amenities', href: '/super-admin/amenities', icon: Check },
@@ -50,6 +51,8 @@ export default function SuperAdminLayout({ children }) {
         { name: 'Roles', href: '/super-admin/roles', icon: Shield },
         { name: 'Coupons', href: '/super-admin/coupons', icon: Tag },
         { name: 'Reviews', href: '/super-admin/reviews', icon: Star },
+        { name: 'Audit Logs', href: '/super-admin/audit-logs', icon: FileText },
+        { name: 'Settings', href: '/super-admin/settings', icon: Settings },
     ];
 
     const handleLogout = async () => {

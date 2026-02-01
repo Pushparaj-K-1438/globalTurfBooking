@@ -9,7 +9,7 @@ export async function POST(req) {
     try {
         await connectDB();
         const body = await req.json();
-        const { name, slug, email, password, mobile } = body;
+        const { name, slug, email, password, mobile, businessType, modules } = body;
 
         // 1. Validation
         if (!name || !slug || !email || !password) {
@@ -38,7 +38,22 @@ export async function POST(req) {
             isActive: true,
         });
 
-        // 5. Create Tenant
+        // 5. Determine modules - use submitted modules or default based on business type
+        const defaultModules = {
+            turf: ["turfs", "bookings", "payments", "reviews", "coupons"],
+            hotel: ["hotels", "bookings", "payments", "reviews", "coupons"],
+            events: ["events", "bookings", "payments", "reviews", "coupons"],
+            gym: ["gym", "bookings", "payments", "reviews"],
+            wellness: ["wellness", "bookings", "payments", "reviews", "coupons"],
+            ecommerce: ["products", "payments", "reviews", "coupons"],
+            multi: ["bookings", "payments", "reviews", "coupons"],
+        };
+
+        const tenantModules = modules && Array.isArray(modules) && modules.length > 0
+            ? modules
+            : (defaultModules[businessType] || ["turfs", "bookings"]);
+
+        // 6. Create Tenant
         const tenant = await Tenant.create({
             _id: tenantId,
             name,
@@ -46,7 +61,10 @@ export async function POST(req) {
             ownerId: owner._id,
             status: "pending", // Requires Super Admin approval
             plan: "free",
-            modules: ["turfs"],
+            modules: tenantModules,
+            settings: {
+                businessType: businessType || 'turf'
+            }
         });
 
         return NextResponse.json({

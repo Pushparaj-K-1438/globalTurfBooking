@@ -6,6 +6,11 @@ import { toast } from "react-toastify";
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState({
+        businessName: "",
+        businessLogo: "",
+        currency: "INR",
+        timezone: "Asia/Kolkata",
+        contact: { email: "", phone: "", address: "" },
         payment: { razorpayKeyId: "", razorpayKeySecret: "", stripePublishableKey: "", stripeSecretKey: "", enabled: false },
         sms: { provider: "twilio", apiKey: "", senderId: "", enabled: false },
         email: { smtpHost: "", smtpPort: "", smtpUser: "", smtpPass: "", enabled: false },
@@ -15,7 +20,7 @@ export default function SettingsPage() {
     const [modules, setModules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState('payment');
+    const [activeTab, setActiveTab] = useState('general');
 
     // Templates State
     const [templates, setTemplates] = useState([]);
@@ -32,6 +37,12 @@ export default function SettingsPage() {
             const data = await res.json();
             if (res.ok && data) {
                 setSettings(prev => ({
+                    ...prev,
+                    businessName: data.name || "",
+                    businessLogo: data.settings?.theme?.logo || "",
+                    currency: data.settings?.currency || "INR",
+                    timezone: data.settings?.timezone || "Asia/Kolkata",
+                    contact: { ...prev.contact, ...(data.settings?.contact || {}) },
                     payment: { ...prev.payment, ...(data.settings?.payment || {}) },
                     sms: { ...prev.sms, ...(data.settings?.sms || {}) },
                     email: { ...prev.email, ...(data.settings?.email || {}) },
@@ -39,8 +50,7 @@ export default function SettingsPage() {
                     push: { ...prev.push, ...(data.settings?.push || {}) }
                 }));
                 setModules(data.modules || []);
-                if (data.modules?.includes('payments')) setActiveTab('payment');
-                else setActiveTab('communication');
+                setActiveTab('general');
             }
         } catch (error) { toast.error("Failed to load settings"); }
         finally { setLoading(false); }
@@ -57,10 +67,20 @@ export default function SettingsPage() {
     const handleSaveSettings = async () => {
         setSaving(true);
         try {
+            const payload = {
+                settings: {
+                    ...settings,
+                    theme: {
+                        logo: settings.businessLogo
+                    }
+                },
+                modules: modules
+            };
+
             const res = await fetch("/api/admin/settings", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(settings),
+                body: JSON.stringify(payload),
             });
             if (res.ok) toast.success("Settings saved successfully");
             else toast.error("Failed to save settings");
@@ -105,22 +125,122 @@ export default function SettingsPage() {
             </header>
 
             {/* Tabs */}
-            <div className="flex gap-4 border-b border-slate-200 mb-8 overflow-x-auto">
-                {showPayment && (
-                    <button onClick={() => setActiveTab('payment')} className={`pb-4 px-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'payment' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Payment Gateway
+            <div className="flex gap-4 border-b border-slate-200 mb-8 overflow-x-auto scrollbar-hide">
+                {[
+                    { id: 'general', label: 'General', icon: FileText },
+                    { id: 'modules', label: 'Modules', icon: Plus },
+                    { id: 'payment', label: 'Payment', icon: CreditCard },
+                    { id: 'communication', label: 'Integrations', icon: MessageSquare },
+                    { id: 'templates', label: 'Templates', icon: Mail }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`pb-4 px-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${activeTab === tab.id ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <tab.icon size={16} />
+                        {tab.label}
                     </button>
-                )}
-                <button onClick={() => setActiveTab('communication')} className={`pb-4 px-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'communication' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                    Communication
-                </button>
-                <button onClick={() => setActiveTab('templates')} className={`pb-4 px-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'templates' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                    Templates
-                </button>
+                ))}
             </div>
 
             <div className="max-w-4xl">
-                {activeTab === 'payment' && showPayment && (
+                {activeTab === 'general' && (
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6 animate-in fade-in space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl"><FileText size={20} /></div>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">General Information</h2>
+                                <p className="text-sm text-slate-500">Business details and branding</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Business Name</label>
+                                <input type="text" value={settings.businessName} onChange={(e) => setSettings({ ...settings, businessName: e.target.value })} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500/20" placeholder="My Venue Store" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Currency</label>
+                                <select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })} className="w-full border border-slate-200 rounded-lg px-4 py-2 bg-white">
+                                    <option value="INR">Indian Rupee (₹)</option>
+                                    <option value="USD">US Dollar ($)</option>
+                                    <option value="EUR">Euro (€)</option>
+                                    <option value="GBP">British Pound (£)</option>
+                                </select>
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Logo URL</label>
+                                <div className="flex gap-4 items-center">
+                                    <input type="text" value={settings.businessLogo} onChange={(e) => setSettings({ ...settings, businessLogo: e.target.value })} className="flex-1 border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500/20" placeholder="https://example.com/logo.png" />
+                                    {settings.businessLogo && <img src={settings.businessLogo} className="w-10 h-10 rounded border object-contain bg-slate-50" />}
+                                </div>
+                            </div>
+
+                            <div className="col-span-2 pt-4 border-t border-slate-100">
+                                <h3 className="text-sm font-bold text-slate-900 mb-4">Contact Information (Public)</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Contact Email</label>
+                                        <input type="email" value={settings.contact?.email} onChange={(e) => setSettings({ ...settings, contact: { ...settings.contact, email: e.target.value } })} className="w-full border border-slate-200 rounded-lg px-4 py-2" placeholder="contact@venue.com" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Phone Number</label>
+                                        <input type="text" value={settings.contact?.phone} onChange={(e) => setSettings({ ...settings, contact: { ...settings.contact, phone: e.target.value } })} className="w-full border border-slate-200 rounded-lg px-4 py-2" placeholder="+91 98765 43210" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Physical Address</label>
+                                        <textarea value={settings.contact?.address} onChange={(e) => setSettings({ ...settings, contact: { ...settings.contact, address: e.target.value } })} rows={2} className="w-full border border-slate-200 rounded-lg px-4 py-2" placeholder="Full address of your venue..." />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'modules' && (
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6 animate-in fade-in space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl"><Plus size={20} /></div>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">Business Modules</h2>
+                                <p className="text-sm text-slate-500">Enable features for your business</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {[
+                                { id: 'bookings', label: 'Bookings System', desc: 'Core booking functionality', icon: '📅' },
+                                { id: 'turfs', label: 'Sports Turfs', desc: 'Manage turfs and courts', icon: '⚽' },
+                                { id: 'hotels', label: 'Hotels & Stays', desc: 'Manage rooms and stay', icon: '🏨' },
+                                { id: 'events', label: 'Event Spaces', desc: 'Manage halls and venues', icon: '🎉' },
+                                { id: 'wellness', label: 'Wellness Services', desc: 'Spa, Yoga, and Massages', icon: '🧘' },
+                                { id: 'gym', label: 'Gym & Fitness', desc: 'Manage gym memberships', icon: '💪' },
+                                { id: 'payments', label: 'Online Payments', desc: 'Accept online payments', icon: '💳' },
+                                { id: 'reviews', label: 'Customer Reviews', desc: 'Enable ratings for listings', icon: '⭐' }
+                            ].map(mod => (
+                                <label key={mod.id} className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${modules.includes(mod.id) ? 'bg-emerald-50 border-emerald-200' : 'hover:bg-slate-50 border-slate-200'}`}>
+                                    <div className="text-2xl mt-1">{mod.icon}</div>
+                                    <div className="flex-1">
+                                        <p className="font-bold text-slate-900 text-sm">{mod.label}</p>
+                                        <p className="text-xs text-slate-500">{mod.desc}</p>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={modules.includes(mod.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) setModules([...modules, mod.id]);
+                                            else setModules(modules.filter(m => m !== mod.id));
+                                        }}
+                                        className="mt-1 rounded text-emerald-600"
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'payment' && (
                     <div className="bg-white rounded-2xl border border-slate-200 p-6 animate-in fade-in">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl"><CreditCard size={20} /></div>

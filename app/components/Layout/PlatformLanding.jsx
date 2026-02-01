@@ -121,7 +121,7 @@ export default function PlatformLanding() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {featuredTenants.map(tenant => (
-                                <a key={tenant._id} href={`http://${tenant.slug}.localhost:3000`} className="group">
+                                <Link key={tenant._id} href={`/v/${tenant.slug}`} className="group">
                                     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
                                         <div className="h-32 bg-slate-100 flex items-center justify-center p-6 relative overflow-hidden">
                                             <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 group-hover:scale-110 transition-transform duration-500"></div>
@@ -145,7 +145,7 @@ export default function PlatformLanding() {
                                             </div>
                                         </div>
                                     </div>
-                                </a>
+                                </Link>
                             ))}
                         </div>
                     </div>
